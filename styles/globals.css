@@ -126,3 +126,22 @@ a {
   --shadow-color: rgba(0, 0, 0, 0.1);
   box-shadow: 0 10px 20px 2px var(--shadow-color);
 }
+
+.gradient-text {
+  background-image: linear-gradient(to right, var(--ferrari-red), var(--orange));
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: slide 3s linear infinite;
+}
+
+@keyframes slide {
+  0% {
+    background-position: left;
+  }
+
+  100% {
+    background-position: right;
+  }
+}

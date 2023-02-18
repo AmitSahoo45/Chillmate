@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Howl } from 'howler';
 import ReactSlider from 'react-slider';
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { storage, app } from '../../constants/Firebase/firebaseClient';
 
 import { ContextStore } from '../../constants/context/Context'
 import styles from './AudioCard.module.css'
 
 const FileRoots = {
-    rain: '/assets/audio/rain.mp3',
-    camp_fire: '/assets/audio/camp_fire.mp3',
-    birds: '/assets/audio/birds.mp3',
-    wind: '/assets/audio/wind.mp3',
-    water_waves: '/assets/audio/water_waves.mp3',
-    thunder: '/assets/audio/thunder.mp3',
-    children_audience: '/assets/audio/children_audience.mp3',
-    city_road: '/assets/audio/city_road.mp3',
+    rain: '/audio/rain.mp3',
+    camp_fire: '/audio/camp_fire.mp3',
+    birds: '/audio/birds.mp3',
+    wind: '/audio/wind.mp3',
+    water_waves: '/audio/water_waves.mp3',
+    thunder: '/audio/thunder.mp3',
+    children_audience: '/audio/children_audience.mp3',
+    city_road: '/audio/city_road.mp3',
 }
 
 const AudioCard = props => {
@@ -23,11 +24,19 @@ const AudioCard = props => {
     const [audio, setAudio] = useState(null)
     const [volume, setVolume] = useState(50)
 
+    const Storage = getStorage();
+
     useEffect(() => {
-        const music = new Audio(FileRoots[audioName])
-        music.loop = true
-        music.volume = volume / 100
-        setAudio(music)
+        getDownloadURL(ref(Storage, FileRoots[audioName]))
+            .then(url => {
+                const music = new Audio(url)
+                music.loop = true
+                music.volume = volume / 100
+                setAudio(music)
+            })
+            .catch(error => {
+                console.log(error)
+            })
     }, [])
 
     useEffect(() => {
