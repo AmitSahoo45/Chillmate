@@ -1,0 +1,368 @@
+import React, { useState } from 'react'
+import {
+    getAuth,
+    signInWithPopup, GoogleAuthProvider,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+} from "firebase/auth";
+
+import {
+    collection,
+    addDoc, getDocs,
+    doc, updateDoc
+} from 'firebase/firestore'
+
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+
+import { app, database, storage } from '../../constants/Firebase/firebaseClient'
+
+const Login = () => {
+    // Variables
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    const [data, setdata] = useState({ email: '', password: '' });
+    const [user, setuser] = useState({ name: '', born: '' });
+    const [fetchedData, setfetchedData] = useState([]);
+
+    const [TrailData, setTrailData] = useState();
+
+    const collectionRef = collection(database, 'users')
+
+    // Functions
+    const signInWithGoogle = () => {
+        signInWithPopup(auth, provider)
+            .then((result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const token = credential.accessToken;
+                // The signed-in user info.
+                const user = result.user;
+                console.log(credential, result)
+                // ...
+            }).catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                // The email of the user's account used.
+                const email = error.email;
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                // ...
+            });
+    }
+
+    const SignInWithEmailAndPassword = () => {
+        createUserWithEmailAndPassword(auth, data.email, data.password)
+            .then((userCredential) => {
+                // Signed in
+                const user = userCredential.user;
+                // ...
+                console.log(userCredential)
+            })
+            .catch((error) => {
+                console.log(error)
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                // ..
+            });
+    }
+
+    const SignupWithEmailAndPassword = () => {
+        signInWithEmailAndPassword(auth, data.email, data.password)
+            .then((userCredential) => {
+                // Signed in
+                const user = userCredential.user;
+                // ...
+                console.log(userCredential)
+            })
+            .catch((error) => {
+                console.log(error)
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                console.log(errorCode, errorMessage)
+                // ..
+            });
+    }
+
+    const handlingDB = () => {
+        addDoc(collectionRef, {
+            name: user.name,
+            born: user.born,
+        })
+            .then((docRef) => {
+                alert('Data added successfully')
+            })
+            .catch((error) => {
+                console.error("Error adding document");
+            });
+    }
+
+    const getDataFromFirebase = () => {
+        getDocs(collectionRef).then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                setfetchedData((prev) => [...prev, { ...doc.data(), id: doc.id }])
+            });
+        });
+    }
+
+    const updateData = () => {
+        const docToUpdate = doc(database, 'users', fetchedData[0].id);
+        updateDoc(docToUpdate, {
+            name: 'Updated Name',
+            born: '2001'
+        })
+            .then(() => {
+                console.log('Updated successfully')
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+    }
+
+    const handleFileUpload = () => {
+        const FileRef = ref(storage, TrailData.name)
+        const uploadTask = uploadBytesResumable(FileRef, TrailData)
+        uploadTask.on('state_changed', (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Upload is ' + progress + '% done');
+        }, (error) => {
+            console.log(error)
+        }, () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                console.log('File available at', downloadURL);
+            });
+        });
+    }
+
+    return (
+        <div>
+            <input
+                type='email'
+                placeholder='Email'
+                className='border-2 border-gray-300 p-2 rounded-lg mr-2'
+                name='email'
+                value={data.email}
+                onChange={(e) => setdata({ ...data, email: e.target.value })}
+            />
+            <br />
+            <input
+                type='password'
+                placeholder='Password'
+                className='border-2 border-gray-300 p-2 rounded-lg mr-2'
+                name='password'
+                value={data.password}
+                onChange={(e) => setdata({ ...data, password: e.target.value })}
+            />
+            <br />
+            <button
+                className='bg-blue-500 text-white p-2 rounded-lg'
+                onClick={() => SignInWithEmailAndPassword()}
+            >
+                Create
+            </button>
+            <button
+                className='bg-blue-500 text-white p-2 rounded-lg'
+                onClick={() => SignupWithEmailAndPassword()}
+            >
+                Login
+            </button>
+            <br />
+            <div>
+                <button
+                    className='bg-blue-500 text-white p-2 rounded-lg'
+                    onClick={() => signInWithGoogle()}
+                >
+                    Login with Google
+                </button>
+            </div>
+            <div>
+                <div>
+                    <input
+                        type='text'
+                        placeholder='Name'
+                        className='border-2 border-gray-300 p-2 rounded-lg mr-2'
+                        name='name'
+                        value={user.name}
+                        onChange={(e) => setuser({ ...user, name: e.target.value })}
+                    />
+                    <br />
+                    <input
+                        type='number'
+                        placeholder='Born'
+                        className='border-2 border-gray-300 p-2 rounded-lg mr-2'
+                        name='born'
+                        value={user.born}
+                        onChange={(e) => setuser({ ...user, born: e.target.value })}
+                    />
+                    <br />
+                    <button
+                        className='bg-blue-500 text-white p-2 rounded-lg'
+                        onClick={() => handlingDB()}
+                    >
+                        Handling DB
+                    </button>
+                    <br />
+                    <button
+                        className='bg-blue-500 text-white p-2 rounded-lg'
+                        onClick={() => getDataFromFirebase()}
+                    >
+                        Get Data
+                    </button>
+                    <br />
+                    <button
+                        className='bg-blue-500 text-white p-2 rounded-lg'
+                        onClick={() => updateData()}
+                    >
+                        Update Data
+                    </button>
+                </div>
+                <div>
+                    <button
+                        className='bg-blue-500 text-white p-2 rounded-lg'
+                        onClick={() => console.log(fetchedData[0].id, fetchedData)}
+                    >
+                        Check Data
+                    </button>
+                </div>
+            </div>
+            <div className="max-w-sm mx-auto rounded overflow-hidden shadow-lg">
+                {/* Upload a file using the input tag */}
+                <input type="file" onChange={event => setTrailData(event.target.files[0])} />
+                <button
+                    className='bg-blue-500 text-white p-2 rounded-lg'
+                    onClick={() => handleFileUpload()}
+                >
+                    Search
+                </button>
+            </div>
+        </div>
+    )
+}
+
+export default Login
+
+
+import React, { useState, useEffect } from 'react';
+import { Howl } from 'howler';
+import ReactSlider from 'react-slider';
+
+import styles from './AudioCard.module.css'
+
+const FileRoots = {
+    rain: '/assets/audio/rain.mp3',
+    camp_fire: '/assets/audio/camp_fire.mp3',
+    birds: '/assets/audio/birds.mp3',
+    wind: '/assets/audio/wind.mp3',
+    water_waves: '/assets/audio/water_waves.mp3',
+    thunder: '/assets/audio/thunder.mp3',
+    children_audience: '/assets/audio/children_audience.mp3',
+    city_road: '/assets/audio/city_road.mp3',
+}
+
+const AudioCard = props => {
+    const { Icon, audioName } = props || {}
+
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [sound, setSound] = useState(null)
+    const [volume, setVolume] = useState(50)
+
+    useEffect(() => {
+        const sound = new Howl({
+            src: FileRoots[audioName],
+            loop: true,
+            volume: volume / 100
+        })
+        setSound(sound)
+
+        return () => {
+            sound.unload()
+        }
+    }, []);
+
+    const handleVolumeChange = (value) => {
+        setVolume(value)
+        sound.volume(value / 100)
+    }
+
+    const handlePlay = () => {
+        if (isPlaying) {
+            sound.pause()
+            setIsPlaying(false)
+        } else {
+            sound.play()
+            setIsPlaying(true)
+        }
+    }
+
+    return (
+        <div className="mx-4 my-4">
+            <div className={`flex flex-col items-center justify-center relative rounded-[10px] shadow-custom overflow-hidden ${isPlaying ? styles.ButtonPlaying : styles.ButtonNotPlaying}`}>
+                <div className='flex items-center justify-center w-[180px] h-40'>
+                    <button onClick={handlePlay} className='absolute'>
+                        <Icon className='text-4xl text-slate-700' />
+                    </button>
+                </div>
+                {/* if isPlaying is true then apply styles.ButtonNotPlaying else apply styles.ButtonPlaying */}
+                <div className={`${styles.reactSlider} ${isPlaying && styles.clicked}`}>
+                    <ReactSlider
+                        className='w-[160px] bg-black flex items-center justify-center'
+                        thumbClassName="w-[15px] h-[15px] rounded-full bg-gray-300 text-transparent shadow-md"
+                        trackClassName='h-[4px] bg-slate-400 rounded-[10px]'
+                        onChange={handleVolumeChange}
+                        value={volume}
+                    />
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default AudioCard
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+
+                <div className="flex flex-wrap items-center justify-center">
+                    <AudioCard
+                        Icon={BsCloudRain}
+                        audioName='rain'
+                    />
+                    <AudioCard
+                        Icon={GiCampfire}
+                        audioName='camp_fire'
+                    />
+                    <AudioCard
+                        Icon={GiNestBirds}
+                        audioName='birds'
+                    />
+                </div>
+                <div className="flex flex-wrap items-center justify-center">
+                    <AudioCard
+                        Icon={SiWindicss}
+                        audioName='wind'
+                    />
+                    <AudioCard
+                        Icon={BiWater}
+                        audioName='water_waves'
+                    />
+                    <AudioCard
+                        Icon={IoThunderstormOutline}
+                        audioName='thunder'
+                    />
+                </div>
+                <div className="flex flex-wrap items-center justify-center">
+                    <AudioCard
+                        Icon={MdOutlineChildFriendly}
+                        audioName='children_audience'
+                    />
+                    <AudioCard
+                        Icon={GiModernCity}
+                        audioName='city_road'
+                    />
+                </div>
+
+            <div className='w-4/5 mx-auto mb-3'>
+
+            </div>
+            <Test />
