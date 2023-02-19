@@ -1,5 +1,5 @@
 import React from 'react'
-import { BsFillDropletFill, BsCloudRain } from "react-icons/bs";
+import { BsCloudRain } from "react-icons/bs";
 import { GiCampfire, GiNestBirds, GiModernCity } from "react-icons/gi";
 import { SiWindicss } from "react-icons/si";
 import { BiWater } from "react-icons/bi";

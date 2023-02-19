@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
-import ReactSlider from 'react-slider';
+import React, { useState, useEffect, useContext, lazy, Suspense } from 'react';
+const ReactSlider = lazy(() => import('react-slider'));
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
-import { storage, app } from '../../constants/Firebase/firebaseClient';
 
 import { ContextStore } from '../../constants/context/Context'
 import styles from './AudioCard.module.css'
@@ -17,27 +16,25 @@ const FileRoots = {
     city_road: '/audio/city_road.mp3',
 }
 
+const Loader = () => {
+    return (
+        <div className="flex justify-center items-center">
+            <div className="w-2 h-2 rounded-full bg-theme-ferrari-red animate-bounce mr-2"></div>
+            <div className="w-2 h-2 rounded-full bg-theme-ferrari-red animate-bounce mr-2"></div>
+            <div className="w-2 h-2 rounded-full bg-theme-ferrari-red animate-bounce"></div>
+        </div>
+    )
+}
+
 const AudioCard = props => {
     const { Icon, audioName } = props || {}
-    const { isAudioPlaying, isResetSettings } = useContext(ContextStore)
+    const { isAudioPlaying } = useContext(ContextStore)
     const [isPlaying, setIsPlaying] = useState(false)
     const [audio, setAudio] = useState(null)
     const [volume, setVolume] = useState(50)
+    const [loading, setLoading] = useState(false)
 
     const Storage = getStorage();
-
-    useEffect(() => {
-        getDownloadURL(ref(Storage, FileRoots[audioName]))
-            .then(url => {
-                const music = new Audio(url)
-                music.loop = true
-                music.volume = volume / 100
-                setAudio(music)
-            })
-            .catch(error => {
-                console.log(error)
-            })
-    }, [])
 
     useEffect(() => {
         if (audio) {
@@ -58,10 +55,31 @@ const AudioCard = props => {
     }, [isPlaying])
 
     const toggleActive = () => {
-        if (isPlaying)
-            setIsPlaying(false)
-        else
-            setIsPlaying(true)
+        if (!audio) {
+            setLoading(true)
+            const storageRef = ref(Storage, FileRoots[audioName]);
+            getDownloadURL(storageRef).then((url) => {
+                const audio = new Audio(url);
+                audio.volume = volume / 100;
+                audio.loop = true;
+                setAudio(audio);
+                setIsPlaying(true);
+                audio.play();
+                setLoading(false)
+            }).catch((error) => {
+                console.log(error)
+            });
+        }
+        else {
+            if (isPlaying) {
+                audio.pause();
+                setIsPlaying(false);
+            }
+            else {
+                audio.play();
+                setIsPlaying(true);
+            }
+        }
     }
 
     const handleVolumeChange = value => {
@@ -71,23 +89,28 @@ const AudioCard = props => {
 
     return (
         <div className="mx-4 my-4">
-            <div className={`flex flex-col items-center justify-center relative rounded-[10px] shadow-custom overflow-hidden ${isPlaying ? styles.ButtonPlaying : styles.ButtonNotPlaying}`}>
-                <div className='flex items-center justify-center w-[180px] h-40'>
-                    <button onClick={toggleActive} className='absolute'>
-                        <Icon className='text-4xl text-slate-700' />
-                    </button>
+            <Suspense fallback={<Loader />}>
+                <div className={`flex flex-col items-center justify-center relative rounded-[10px] shadow-custom overflow-hidden ${isPlaying ? styles.ButtonPlaying : styles.ButtonNotPlaying}`}>
+                    <div className='flex items-center justify-center w-[180px] h-40'>
+                        <button onClick={toggleActive} className='absolute'>
+                            {!loading ?
+                                <Icon className='text-4xl text-slate-700' /> :
+                                <Loader />
+                            }
+                        </button>
+                    </div>
+                    {/* if isPlaying is true then apply styles.ButtonNotPlaying else apply styles.ButtonPlaying */}
+                    <div className={`${styles.reactSlider} ${isPlaying && styles.clicked}`}>
+                        <ReactSlider
+                            className='w-[160px] bg-black flex items-center justify-center'
+                            thumbClassName="w-[15px] h-[15px] rounded-full bg-gray-300 text-transparent shadow-md"
+                            trackClassName='h-[4px] bg-slate-400 rounded-[10px]'
+                            onChange={handleVolumeChange}
+                            value={volume}
+                        />
+                    </div>
                 </div>
-                {/* if isPlaying is true then apply styles.ButtonNotPlaying else apply styles.ButtonPlaying */}
-                <div className={`${styles.reactSlider} ${isPlaying && styles.clicked}`}>
-                    <ReactSlider
-                        className='w-[160px] bg-black flex items-center justify-center'
-                        thumbClassName="w-[15px] h-[15px] rounded-full bg-gray-300 text-transparent shadow-md"
-                        trackClassName='h-[4px] bg-slate-400 rounded-[10px]'
-                        onChange={handleVolumeChange}
-                        value={volume}
-                    />
-                </div>
-            </div>
+            </Suspense>
         </div>
     )
 }
