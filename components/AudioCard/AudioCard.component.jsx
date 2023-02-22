@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, lazy, Suspense } from 'react';
 const ReactSlider = lazy(() => import('react-slider'));
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
+import Loader from '../Loader/Loader';
 import { ContextStore } from '../../constants/context/Context'
 import styles from './AudioCard.module.css'
 
@@ -14,16 +15,6 @@ const FileRoots = {
     thunder: '/audio/thunder.mp3',
     children_audience: '/audio/children_audience.mp3',
     city_road: '/audio/city_road.mp3',
-}
-
-const Loader = () => {
-    return (
-        <div className="flex justify-center items-center">
-            <div className="w-2 h-2 rounded-full bg-theme-ferrari-red animate-bounce mr-2"></div>
-            <div className="w-2 h-2 rounded-full bg-theme-ferrari-red animate-bounce mr-2"></div>
-            <div className="w-2 h-2 rounded-full bg-theme-ferrari-red animate-bounce"></div>
-        </div>
-    )
 }
 
 const AudioCard = props => {

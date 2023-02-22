@@ -3,6 +3,7 @@ import Developer_Activity from '../../public/assets/images/developer_activity.sv
 import ToDo from '../../public/assets/images/todo.svg';
 import Nature from '../../public/assets/images/nature.svg';
 import Lofi from '../../public/assets/images/lofi.svg';
+import TrailImage from '../../public/assets/images/trailImage.svg';
 
 export default {
     Logo,
@@ -10,4 +11,5 @@ export default {
     ToDo,
     Nature,
     Lofi,
+    TrailImage
 };

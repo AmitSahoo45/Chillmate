@@ -2,9 +2,7 @@ import Image from 'next/legacy/image'
 import React from 'react'
 import { useRouter } from 'next/router';
 
-import AudioCard from '../AudioCard/AudioCard.component'
 import { images } from '../../constants/Exports'
-import Test from '../Test';
 
 const LandingPage = () => {
     const router = useRouter();
