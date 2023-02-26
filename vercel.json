@@ -1,0 +1,9 @@
+{
+    "build": {
+      "env": {
+        "API_KEY": "123456"
+      },
+      "command": "yarn custom-build"
+    }
+  }
+  
