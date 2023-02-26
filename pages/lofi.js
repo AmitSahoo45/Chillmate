@@ -3,9 +3,9 @@ import { BsPlay, BsPause, BsSkipBackward, BsSkipForward } from 'react-icons/bs'
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
 import { app } from '../constants/Firebase/firebaseClient'
-import { Lofi, Motivational, Chill, Study } from '../constants/Exports/FileNames'
+import { LofiM, Motivational, Chill, Study } from '../constants/Exports/FileNames'
 
-const lofi = () => {
+const Lofi = () => {
     const [audio, setaudio] = useState(null);
     const [isPlaying, setIsPlaying] = useState({
         isPlayingMtvl: false,
@@ -19,7 +19,7 @@ const lofi = () => {
     const TogglePlay = (status) => {
         if (audio == null) {
             setIsPlaying({ ...isPlaying, [status]: true })
-            const storageRef = ref(Storage, Lofi.audio);
+            const storageRef = ref(Storage, LofiM.audio);
             getDownloadURL(storageRef)
                 .then((url) => {
                     const audio = new Audio(url);
@@ -107,4 +107,4 @@ const lofi = () => {
     )
 }
 
-export default lofi
+export default Lofi

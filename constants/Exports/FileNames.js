@@ -17,7 +17,7 @@ export const Study = {
     audio: '/motivational/audio/AFinalSacrifice.mp3',
 }
 
-export const Lofi = {
+export const LofiM = {
     _id: 'BornALegend',
     title: 'Born A Legend',
     composer: 'Greg Dombrowski',
