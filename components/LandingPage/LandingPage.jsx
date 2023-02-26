@@ -12,11 +12,10 @@ const LandingPage = () => {
             <section className='relative flex flex-col sm:flex-row mt-3 mb-8'>
                 <div className='flex-[1] flex items-center justify-center'>
                     <div className="relative w-[60%] h-[90%]">
-                        <Image src={images.Developer_Activity}
+                        <Image src='/assets/images/developer_activity.svg'
                             alt="Developers working on computers"
-                            layout="responsive"
-                            objectFit="cover"
-                            objectPosition="center"
+                            width={100}
+                            height={100}
                         />
                     </div>
                 </div>
@@ -41,7 +40,7 @@ const LandingPage = () => {
                     <div className="container px-5 py-24 mx-auto">
                         <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col">
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
-                                <Image src={images.Nature}
+                                <Image src='/assets/images/nature.svg'
                                     alt="Nature Sounds"
                                     height={100}
                                     width={100}
@@ -66,7 +65,7 @@ const LandingPage = () => {
                                 >Listen Now</button>
                             </div>
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
-                                <Image src={images.Lofi}
+                                <Image src='/assets/images/lofi.svg'
                                     alt="Nature Sounds"
                                     height={100}
                                     width={100}
@@ -75,7 +74,7 @@ const LandingPage = () => {
                         </div>
                         <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col">
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
-                                <Image src={images.Nature}
+                                <Image src='/assets/images/nature.svg'
                                     alt="Nature Sounds"
                                     height={100}
                                     width={100}
@@ -97,7 +96,7 @@ const LandingPage = () => {
                                 <button className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'>Listen Now</button>
                             </div>
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
-                                <Image src={images.ToDo}
+                                <Image src='/assets/images/todo.svg'
                                     alt="Nature Sounds"
                                     height={100}
                                     width={100}
