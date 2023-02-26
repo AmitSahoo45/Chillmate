@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext, lazy, Suspense } from 'react';
+import Image from 'next/image';
 const ReactSlider = lazy(() => import('react-slider'));
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
+import { app } from '../../constants/Firebase/firebaseClient'
 import Loader from '../Loader/Loader';
 import { ContextStore } from '../../constants/context/Context'
-import styles from './AudioCard.module.css'
+import styles from '../../styles/AudioCard.module.css'
 
 const FileRoots = {
     rain: '/audio/rain.mp3',
@@ -18,14 +20,15 @@ const FileRoots = {
 }
 
 const AudioCard = props => {
-    const { Icon, audioName } = props || {}
+    const { Icon, audioName, Alt } = props || {}
+
     const { isAudioPlaying } = useContext(ContextStore)
     const [isPlaying, setIsPlaying] = useState(false)
     const [audio, setAudio] = useState(null)
     const [volume, setVolume] = useState(50)
     const [loading, setLoading] = useState(false)
 
-    const Storage = getStorage();
+    const Storage = getStorage(app);
 
     useEffect(() => {
         if (audio) {
@@ -82,10 +85,10 @@ const AudioCard = props => {
         <div className="mx-4 my-4">
             <Suspense fallback={<Loader />}>
                 <div className={`flex flex-col items-center justify-center relative rounded-[10px] shadow-custom overflow-hidden ${isPlaying ? styles.ButtonPlaying : styles.ButtonNotPlaying}`}>
-                    <div className='flex items-center justify-center w-[180px] h-40'>
+                    <div className='flex items-center justify-center w-[150px] h-32'>
                         <button onClick={toggleActive} className='absolute'>
                             {!loading ?
-                                <Icon className='text-4xl text-slate-700' /> :
+                                <Image width={40} height={40} src={Icon} alt={Alt} /> :
                                 <Loader />
                             }
                         </button>
@@ -93,7 +96,7 @@ const AudioCard = props => {
                     {/* if isPlaying is true then apply styles.ButtonNotPlaying else apply styles.ButtonPlaying */}
                     <div className={`${styles.reactSlider} ${isPlaying && styles.clicked}`}>
                         <ReactSlider
-                            className='w-[160px] bg-black flex items-center justify-center'
+                            className='w-[130px] bg-black flex items-center justify-center'
                             thumbClassName="w-[15px] h-[15px] rounded-full bg-gray-300 text-transparent shadow-md"
                             trackClassName='h-[4px] bg-slate-400 rounded-[10px]'
                             onChange={handleVolumeChange}

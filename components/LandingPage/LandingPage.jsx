@@ -52,7 +52,7 @@ const LandingPage = () => {
                                 <p className="leading-relaxed text-base">Immerse yourself in a focused and tranquil coding experience with our integrated soothing background sounds. Boost your productivity and eliminate distractions with our easy-to-use productivity tool. Say goodbye to scattered thoughts and hello to enhanced efficiency and relaxation.</p>
                                 <button
                                     className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                    onClick={() => router.push('/nature')}
+                                    onClick={() => router.push('/chillSounds')}
                                 >Listen Now</button>
                             </div>
                         </div>
@@ -86,7 +86,7 @@ const LandingPage = () => {
                                 <p className="leading-relaxed text-base">Immerse yourself in a focused and tranquil coding experience with our integrated soothing background sounds. Boost your productivity and eliminate distractions with our easy-to-use productivity tool. Say goodbye to scattered thoughts and hello to enhanced efficiency and relaxation.</p>
                                 <button
                                     className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                    onClick={() => router.push('/nature')}
+                                    onClick={() => router.push('/chillSounds')}
                                 >Listen Now</button>
                             </div>
                         </div>
