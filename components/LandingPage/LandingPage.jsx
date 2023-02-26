@@ -2,7 +2,6 @@ import Image from 'next/legacy/image'
 import React from 'react'
 import { useRouter } from 'next/router';
 
-import { images } from '../../constants/Exports'
 
 const LandingPage = () => {
     const router = useRouter();

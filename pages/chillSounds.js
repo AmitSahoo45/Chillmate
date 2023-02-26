@@ -2,7 +2,6 @@ import Image from 'next/image'
 import React from 'react'
 
 import AudioCard from '../components/AudioCard/AudioCard'
-import { images } from '../constants/Exports'
 
 const chillSounds = () => {
     return (

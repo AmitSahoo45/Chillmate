@@ -3,7 +3,6 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 
 import { Avatar } from '../../components'
-import { images } from '../../constants/Exports'
 
 const Navbar = () => {
     const [user, setuser] = useState(true);
