@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const productivity = () => {
+const Productivity = () => {
     const [timeLeft, setTimeLeft] = useState(25 * 60);
     const [timerActive, setTimerActive] = useState(false);
 
@@ -63,9 +63,9 @@ const productivity = () => {
 
     return (
         <div className="flex flex-col items-center justify-center h-screen">
-            <Options onChange={handleTimeChange} value={time} />
+            Testing
         </div>
     )
 }
 
-export default productivity
+export default Productivity
