@@ -13,8 +13,8 @@ const LandingPage = () => {
                     <div className="relative w-[60%] h-[90%]">
                         <Image src='/assets/images/developer_activity.svg'
                             alt="Developers working on computers"
-                            width={100}
-                            height={100}
+                            layout='fill'
+                            objectFit='contain'
                         />
                     </div>
                 </div>
@@ -33,7 +33,7 @@ const LandingPage = () => {
                 </div>
             </section>
             <section className='w-4/5 mx-auto my-3'>
-                <h1 className="sm:text-3xl text-2xl font-montserrat mb-1 mt text-gray-900">The Tools we provide</h1>
+                <h1 className="sm:text-base text-sm font-montserrat mb-1 mt text-gray-900">The Tools we provide</h1>
                 <div className="h-[3px] w-32 bg-theme-ferrari-red rounded"></div>
                 <section className="text-gray-600 body-font">
                     <div className="container px-5 py-24 mx-auto">
@@ -92,7 +92,10 @@ const LandingPage = () => {
                             <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
                                 <h2 className="text-gray-900 text-lg title-font font-medium mb-2">ToDo & Pomodoro</h2>
                                 <p className="leading-relaxed text-base">Boost your productivity and stay on top of your tasks with our integrated Todo List and Pomodoro Timer. Prioritize your to-dos, keep track of your progress, and stay focused with timed work and rest intervals. Say goodbye to distractions and hello to a more organized and efficient work experience.</p>
-                                <button className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'>Listen Now</button>
+                                <button 
+                                className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
+                                onClick={() => router.push('/productivity')}
+                                >Listen Now</button>
                             </div>
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
                                 <Image src='/assets/images/todo.svg'
