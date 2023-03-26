@@ -82,20 +82,22 @@ const LandingPage = () => {
                             <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
                                 <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Nature Sounds</h2>
                                 <p className="leading-relaxed text-base">Immerse yourself in a focused and tranquil coding experience with our integrated soothing background sounds. Boost your productivity and eliminate distractions with our easy-to-use productivity tool. Say goodbye to scattered thoughts and hello to enhanced efficiency and relaxation.</p>
-                                <button
-                                    className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                    onClick={() => router.push('/chillSounds')}
-                                >Listen Now</button>
+                                <div className="">
+                                    <button
+                                        className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
+                                        onClick={() => router.push('/chillSounds')}
+                                    >Listen Now</button>
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center lg:w-3/5 mx-auto sm:flex-row flex-col">
                             <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
                                 <h2 className="text-gray-900 text-lg title-font font-medium mb-2">ToDo & Pomodoro</h2>
                                 <p className="leading-relaxed text-base">Boost your productivity and stay on top of your tasks with our integrated Todo List and Pomodoro Timer. Prioritize your to-dos, keep track of your progress, and stay focused with timed work and rest intervals. Say goodbye to distractions and hello to a more organized and efficient work experience.</p>
-                                <button 
-                                className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                onClick={() => router.push('/productivity')}
-                                >Listen Now</button>
+                                <button
+                                    className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
+                                    onClick={() => router.push('/productivity')}
+                                >Use Now</button>
                             </div>
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
                                 <Image src='/assets/images/todo.svg'
