@@ -1,4 +1,5 @@
 import { createContext, useState } from 'react';
+import { stages } from '../Exports/Pomodoro';
 
 const ContextStore = createContext();
 
@@ -13,13 +14,19 @@ const ProviderContext = ({ children }) => {
         email: "",
         accessToken: ""
     });
+    const [formData, setFormData] = useState({
+        pomodoroTime: stages.pomodoroTime / 60,
+        shortBreakTime: stages.shortBreakTime / 60,
+        longBreakTime: stages.longBreakTime / 60,
+    })
 
     return (
         <ContextStore.Provider
             value={{
                 isAudioPlaying, setisAudioPlaying,
                 isResetSettings, setisResetSettings,
-                user, setUser
+                user, setUser,
+                formData, setFormData
             }}>
             {children}
         </ContextStore.Provider>

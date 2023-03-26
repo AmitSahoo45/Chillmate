@@ -145,3 +145,25 @@ a {
     background-position: right;
   }
 }
+
+@layer components {
+  .tw-timer-container {
+    @apply w-[20rem] h-[20rem] flex justify-center items-center rounded-full bg-gradient-to-t to-[var(--orange)] from-[var(--ferrari-red)] shadow-2xl shadow-[#f87070];
+  }
+
+  .tw-timer {
+    @apply w-[17rem] h-[17rem] flex justify-center items-center rounded-full text-6xl bg-[var(--ecru-white)] text-[var(--ferrari-red)] font-bold;
+  }
+
+  .tw-infoContainer {
+    @apply bg-[var(--black)] flex justify-between items-center rounded-full p-3 mb-6;
+  }
+
+  .tw-infoItem {
+    @apply p-3 text-[var(--ecru-white)] font-semibold rounded-full text-xs flex-1 text-center whitespace-nowrap cursor-pointer;
+  }
+
+  .tw-infoItem.active {
+    @apply bg-[var(--orange)] text-[var(--ecru-white)];
+  }
+}

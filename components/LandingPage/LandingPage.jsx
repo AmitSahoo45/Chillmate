@@ -60,7 +60,7 @@ const LandingPage = () => {
                                 <p className="leading-relaxed text-base">Experience the soothing and calming sounds of Lofi Songs and improve your focus and productivity. Let our carefully curated selection of relaxing beats transport you to a state of mental clarity and tranquility, helping you stay on track and achieve your goals. With our integrated Pomodoro timer and convenient to-do list, you can eliminate distractions and make the most of your time. Say goodbye to stress and hello to a more productive and enjoyable workday with Lofi Songs.</p>
                                 <button
                                     className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                    onClick={() => router.push('/lofi')}
+                                    onClick={() => router.push('/accomplish')}
                                 >Listen Now</button>
                             </div>
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
