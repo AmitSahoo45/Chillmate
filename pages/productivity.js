@@ -27,6 +27,11 @@ const Productivity = () => {
             alert('Please enter a task')
             return
         }
+
+        if (user.isPresent === false) {
+            alert('Please sign in to add a task')
+            return
+        }
         try {
             const docRef = await addDoc(collection(database, "users", user.uid, "tasks"), {
                 task: inputText,
@@ -41,6 +46,10 @@ const Productivity = () => {
     }
 
     const deleteTask = async (id) => {
+        if (user.isPresent === false) {
+            alert('Please sign in to add a task')
+            return
+        }
         try {
             await deleteDoc(doc(database, "users", user.uid, "tasks", id));
             setTaskHook(!taskHook)

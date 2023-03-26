@@ -33,7 +33,7 @@ const LandingPage = () => {
                 </div>
             </section>
             <section className='w-4/5 mx-auto my-3'>
-                <h1 className="sm:text-base text-sm font-montserrat mb-1 mt text-gray-900">The Tools we provide</h1>
+                <h1 className="sm:text-xl text-sm font-montserrat mb-1 mt text-gray-900">The Tools we provide</h1>
                 <div className="h-[3px] w-32 bg-theme-ferrari-red rounded"></div>
                 <section className="text-gray-600 body-font">
                     <div className="container px-5 py-24 mx-auto">

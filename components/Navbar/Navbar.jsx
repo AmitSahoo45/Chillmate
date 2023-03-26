@@ -33,11 +33,26 @@ const Navbar = () => {
                     photoURL: result.user.photoURL,
                     uid: result.user.uid
                 }))
-            }).catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                const email = error.email;
-                const credential = GoogleAuthProvider.credentialFromError(error);
+            })
+            .catch((error) => {
+                console.log(error)
+            });
+    }
+
+    const signOut = () => {
+        auth.signOut()
+            .then(() => {
+                setUser({
+                    isPresent: false,
+                    name: '',
+                    email: '',
+                    photoURL: '',
+                    uid: ''
+                })
+                localStorage.removeItem('CHILLMATE')
+            })
+            .catch((error) => {
+                console.log(error)
             });
     }
 
@@ -55,11 +70,19 @@ const Navbar = () => {
             </div>
             <div>
                 {user.isPresent ? (
-                    <Avatar
-                        src={user.photoURL}
-                        alt={user.name}
-                        size={50}
-                    />
+                    <div className='flex items-center'>
+                        <button
+                            className="bg-theme-orange text-white px-4 py-2 rounded-lg mr-4"
+                            onClick={signOut}
+                        >
+                            Sign Out
+                        </button>
+                        <Avatar
+                            src={user?.photoURL ? user.photoURL.replace('s96-c', 's500-c') : ''}
+                            alt={user?.name}
+                            size={50}
+                        />
+                    </div>
                 ) : (
                     <button
                         className="custom-btn button"
