@@ -58,6 +58,7 @@ const Navbar = () => {
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('CHILLMATE'))
+        console.log(user)
         if (user) setUser(user)
     }, []);
 
