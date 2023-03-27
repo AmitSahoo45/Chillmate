@@ -77,7 +77,7 @@ const LandingPage = () => {
                             <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
                                 <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Threaded Notes</h2>
                                 <p className="leading-relaxed text-base">
-                                    Introducing our chat-style note-taking feature with threaded conversations, designed to capture multiple streams of thoughts in one place. Organize ideas with ease and never lose track of your train of thought. With our innovative note-taking system, you'll be able to effortlessly manage your notes and ideas, saving time and increasing productivity.
+                                    Introducing our chat-style note-taking feature with threaded conversations, designed to capture multiple streams of thoughts in one place. Organize ideas with ease and never lose track of your train of thought. With our innovative note-taking system, you will be able to effortlessly manage your notes and ideas, saving time and increasing productivity.
                                 </p>
                                 <button
                                     className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
