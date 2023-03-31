@@ -1,0 +1,72 @@
+    // const DownloadContent = () => {
+    //     const doc = new jsPDF();
+    //     const contentWidth = doc.internal.pageSize.getWidth();
+    //     const contentHeight = doc.internal.pageSize.getHeight();
+    //     const html = NoteRef.current.innerHTML;
+
+    //     NoteRef.current.style.height = `${contentHeight}mm`;
+
+    //     doc.html(html, {
+    //         callback: function (doc) { doc.save('Notes.pdf') },
+    //         margin: [10, 10, 10, 10],
+    //         autoPaging: 'text',
+    //         x: 0,
+    //         y: 0,
+    //         width: contentWidth,
+    //         windowWidth: contentWidth,
+    //         fontSize: 4,
+    //     });
+
+    //     NoteRef.current.style.height = 'auto';
+    // };
+    // const DownloadContent = () => {
+    //     const doc = new jsPDF();
+    //     const contentWidth = doc.internal.pageSize.getWidth();
+    //     const contentHeight = doc.internal.pageSize.getHeight();
+    //     const html = NoteRef.current.innerHTML;
+
+    //     NoteRef.current.style.height = `${contentHeight}mm`;
+
+    //     doc.html(html, {
+    //         callback: function (doc) { doc.save('Notes.pdf') },
+    //         margin: [10, 10, 10, 10],
+    //         autoPaging: 'text',
+    //         x: 0,
+    //         y: 0,
+    //         width: contentWidth,
+    //         windowWidth: contentWidth,
+    //         fontSize: 12,
+    //     });
+
+    //     NoteRef.current.style.height = 'auto';
+    // };
+
+        const DownloadContent = () => {
+        // const doc = new jsPDF();
+
+        // doc.html(NoteRef.current, {
+        //     callback: function (doc) {
+        //         doc.save('Notes.pdf');
+        //     },
+        //     margin: [10, 10, 10, 10],
+        //     autoPaging: 'text',
+        //     x: 0,
+        //     y: 0,
+        //     width: 190,
+        //     windowWidth: 675
+        // });
+        const options = {
+            margin: 10,
+            filename: 'Notes.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        htmlToPdf(NoteRef.current, options);
+    }
+
+            e.preventDefault();
+        const sanitizedText = sanitizeText(note);
+        console.log(sanitizedText);
+        setrenderingText(sanitizedText);
