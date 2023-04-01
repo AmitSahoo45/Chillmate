@@ -16,7 +16,7 @@ const NewNote = () => {
     const sanitizeText = (text) => {
         const allowedTags = ['b', 'i', 'u', 'span', 'br'];
         const allowedAttributes = {
-            'span': ['style', '#'],
+            'span': ['style', 'color'],
             'b': [],
             'i': [],
             'u': []
@@ -30,14 +30,19 @@ const NewNote = () => {
                 ALLOWED_ATTR: allowedAttributes
             });
 
-            sanitizedText = sanitizedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+            sanitizedText = sanitizedText.replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
+                .replace(/\$n+/g, function (match) {
+                    return '<br>'.repeat(match.length - 1);
+                })
+                .replace(/\$t+/g, function (match) {
+                    return '&nbsp;'.repeat(match.length * 4);
+                })
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/~(.*?)~/g, '<s>$1</s>')
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
-                .replace(/&([\w#]+)#(.*?)&\1#/g, '<span style="color: $1">$2</span>')
-                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
-                .replace(/\$n/g, "<br>")
-                .replace(/\$t/g, "&nbsp;&nbsp;&nbsp;&nbsp;")
+                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>');
+
 
             return sanitizedText;
         } catch (error) {
