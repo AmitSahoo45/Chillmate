@@ -7,6 +7,7 @@ import { jsPDF } from "jspdf"
 const NewNote = () => {
     const [header, setHeader] = useState('');
     const [desc, setDesc] = useState('');
+    const [tags, setTags] = useState('');
     const [note, setNote] = useState('');
     const [renderingText, setrenderingText] = useState('');
 
@@ -47,24 +48,27 @@ const NewNote = () => {
     };
 
     const DownloadContent = () => {
-        const doc = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: [NoteRef.current.offsetWidth, NoteRef.current.offsetHeight]
-        });
-        
-        // Set font size to 10
-        doc.setFontSize(10);
-    
-        doc.html(NoteRef.current, {
-            callback: function (doc) {
-                doc.save("Note.pdf");
-            },
-            x: 10,
-            y: 10,
-        }); 
+        try {
+            const doc = new jsPDF({
+                orientation: "p",
+                unit: "em",
+                format: [2000, 730]
+            });
+
+            doc.html(NoteRef.current, {
+                callback: function (doc) {
+                    doc.save("Note.pdf");
+                },
+                x: 30,
+                y: 30,
+                putOnlyUsedFonts: true,
+            });
+        }
+        catch (err) {
+            console.log(err);
+        }
     }
-    
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -75,9 +79,9 @@ const NewNote = () => {
     };
 
     return (
-        <div className='flex flex-col my-5'>
+        <div className='flex flex-col my-5 relative'>
             <Head>
-                Create new Note
+                <title>Create New Note</title>
             </Head>
             <div className="w-4/5 mx-auto ">
                 <h3 className="font-montserrat text-xl">
@@ -131,6 +135,7 @@ const NewNote = () => {
                 {/* Rendering Part */}
                 <div className="flex-[0.5] p-2 h-[500px] overflow-y-scroll scrollbar-hidden">
                     <div
+                        className='font-poppins'
                         ref={NoteRef}
                         dangerouslySetInnerHTML={{ __html: renderingText }}
                     >

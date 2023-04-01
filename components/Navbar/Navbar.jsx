@@ -65,7 +65,7 @@ const Navbar = () => {
     return (
         <nav className="bg-white bg-opacity-50 backdrop-filter backdrop-blur-sm backdrop-saturate-200 border border-gray-300 border-opacity-50 rounded-lg py-2 px-4 flex justify-between items-center">
             <div className='relative '>
-                <Link href="/">
+                <Link href="/" aria-label='Home'>
                     <Image src='/assets/images/logo.png' alt="logo" width={70} height={50} />
                 </Link>
             </div>
