@@ -33,6 +33,7 @@ const Navbar = () => {
                     photoURL: result.user.photoURL,
                     uid: result.user.uid
                 }))
+                console.log(user)
             })
             .catch((error) => {
                 console.log(error)

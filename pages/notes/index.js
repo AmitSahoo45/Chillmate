@@ -1,9 +1,37 @@
+import React, { useContext, useEffect, useState } from 'react'
 import Image from 'next/image'
-import React from 'react'
 import Link from 'next/link';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import axios from 'axios';
+import { RiPencilFill, RiDeleteBin3Line, RiShareLine, RiEyeFill } from 'react-icons/ri'
+import { toast } from 'react-toastify';
+
+import { Loader } from '../../components'
+import { ContextStore } from '../../constants/context/Context';
 
 const Notes = () => {
+  const [notes, setNotes] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const router = useRouter()
+  const { user } = useContext(ContextStore)
+
+  const getNotes = async () => {
+    try {
+      setIsLoading(true)
+      const { data } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/all/${user.uid}`)
+      setNotes(data.notes)
+      setIsLoading(false)
+    } catch (error) {
+      toast.error('Failed to fetch notes')
+    }
+  }
+
+  useEffect(() => {
+    if (user.isPresent)
+      getNotes()
+  }, [user])
 
   return (
     <>
@@ -26,15 +54,54 @@ const Notes = () => {
               </p>
             </div>
           </div>
-          <div className="border border-[var(--ferrari-red)] mx-auto w-3/5 my-8"></div>
-          <div className="flex flex-col justify-center sm:flex-row">
-            {/* go to /notes/new */}
+          <div className="flex flex-col items-center ">
             <Link href="/notes/new" aria-label='Create New Note'>
               <button
-                className="bg-[var(--ferrari-red)] text-white px-4 py-2 mt-5 rounded-md">
+                className="bg-[var(--orange)] text-white px-4 py-2 my-5 rounded-md">
                 Create New Note
               </button>
             </Link>
+            <div className='mt-4 w-4/5'>
+              <h3 className='text-theme-ferrari-red text-xl border-b-2 border-theme-ferrari-red text-center mb-3 font-poppins'>
+                <span className='font-medium text-3xl'>Y</span>our&nbsp;
+                <span className='font-medium text-3xl'>N</span>otes
+              </h3>
+              <div className='flex flex-col'>
+                {
+                  isLoading ?
+                    <div className="mt-5">
+                      <Loader />
+                    </div>
+                    :
+                    notes.length == 0 ?
+                      <div className="mt-3">
+                        <p className='text-center text-theme-ferrari-red text-lg'>
+                          You have no notes yet
+                        </p>
+                      </div> :
+                      notes?.map(note => (
+                        <div key={note._id} className='flex rounded-md items-center justify-between p-4 my-1 sm:my-2 w-full shadow-md shadow-slate-200 transition-all hover:shadow-theme-orange hover:shadow-sm'>
+                          <div>
+                            <h3 className='font-montserrat text-lg'>{note.header}</h3>
+                            <p className='font-montserrat text-sm'>{note.desc.substring(0, 70)}....</p>
+                          </div>
+                          <div className='flex'>
+                            <RiPencilFill
+                              className='ml-2 text-lg cursor-pointer'
+                              onClick={() => router.push(`/notes/edit/${note._id}`)}
+                            />
+                            <RiDeleteBin3Line className='ml-3 text-lg cursor-pointer' />
+                            <RiShareLine className='ml-3 text-lg cursor-pointer' />
+                            <RiEyeFill
+                              className='ml-3 text-lg cursor-pointer mr-2'
+                              onClick={() => router.push(`/notes/view/${note._id}`)}
+                            />
+                          </div>
+                        </div>
+                      ))
+                }
+              </div>
+            </div>
           </div>
         </div>
       </div>

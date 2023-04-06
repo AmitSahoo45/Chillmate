@@ -1,5 +1,5 @@
 import '../styles/globals.css'
-import { Navbar, Footer } from '../components'
+import { Navbar, Footer, Alert } from '../components'
 import { ProviderContext } from '../constants/context/Context'
 
 function MyApp({ Component, pageProps }) {
@@ -9,6 +9,7 @@ function MyApp({ Component, pageProps }) {
         <Navbar />
         <Component {...pageProps} />
         <Footer />
+        <Alert />
       </ProviderContext>
     </>
   )

@@ -1,17 +1,24 @@
-import React, { useRef, useState } from 'react'
+import React, { useContext, useRef, useState } from 'react'
 import Head from 'next/head';
-
+import { toast } from 'react-toastify';
 import DOMPurify from 'dompurify';
 import { jsPDF } from "jspdf"
+import axios from 'axios';
+import { useRouter } from 'next/router'
+
+import { ContextStore } from '../../constants/context/Context';
 
 const NewNote = () => {
+    const router = useRouter()
+
     const [header, setHeader] = useState('');
     const [desc, setDesc] = useState('');
     const [tags, setTags] = useState('');
     const [note, setNote] = useState('');
     const [renderingText, setrenderingText] = useState('');
-
     const NoteRef = useRef(null);
+
+    const { user } = useContext(ContextStore)
 
     const sanitizeText = (text) => {
         const allowedTags = ['b', 'i', 'u', 'span', 'br'];
@@ -46,7 +53,7 @@ const NewNote = () => {
 
             return sanitizedText;
         } catch (error) {
-            console.log(error);
+            toast.error('Oops! Something went wrong.')
             sanitizedText = text;
         }
         return sanitizedText;
@@ -70,7 +77,7 @@ const NewNote = () => {
             });
         }
         catch (err) {
-            console.log(err);
+            toast.error('Something went wrong');
         }
     }
 
@@ -78,10 +85,41 @@ const NewNote = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const sanitizedText = sanitizeText(note);
-        setrenderingText(sanitizedText);
-
-        console.log("NoteRef", NoteRef.current);
+        setrenderingText(sanitizedText)
     };
+
+    const SaveNote = async (e) => {
+        e.preventDefault();
+        try {
+            if (!header || !desc || !tags || !note) {
+                toast.error('Please fill all the fields')
+                return;
+            }
+
+            if (user.isPresent) {
+                const loadingToast = toast.info('Saving note...');
+
+                await axios.post(`https://backend-b7h6.onrender.com/v1/textnotes/create`, {
+                    header,
+                    desc,
+                    tags,
+                    content: note,
+                    userGleID: user.uid,
+                    name: user.name,
+                    photoURL: user.photoURL,
+                    email: user.email,
+                    googleID: user.uid
+                })
+
+                toast.dismiss(loadingToast);
+                toast.success('Note saved successfully');
+
+                router.push('/notes');
+            }
+        } catch (error) {
+            toast.error(error.response.data.message)
+        }
+    }
 
     return (
         <div className='flex flex-col my-5 relative'>
@@ -119,6 +157,19 @@ const NewNote = () => {
                         rows={2}
                     />
                 </div>
+                <div className="flex flex-col">
+                    <label
+                        htmlFor="tags"
+                        className="font-montserrat text-lg my-3"
+                    >
+                        Tags
+                    </label>
+                    <textarea name="tags" id="tags"
+                        value={tags}
+                        className="border border-[var(--ferrari-red)] rounded-md p-2 focus:outline-none w-full"
+                        onChange={(e) => setTags(e.target.value)}
+                    />
+                </div>
             </div>
             <div className="border-t-2 border-[var(--ferrari-red)] mx-auto w-full mt-8"></div>
             <div className='flex'>
@@ -149,20 +200,30 @@ const NewNote = () => {
                 {/* ------------------------------------------ */}
             </div>
             <div className="border-t-2 border-[var(--ferrari-red)] mx-auto w-full"></div>
-            <div className='flex justify-center'>
-                <button
-                    className="bg-[var(--ferrari-red)] text-white px-4 py-2 mt-5 rounded-md"
-                    onClick={handleSubmit}
-                >
-                    Check Docs
-                </button>
-                <button
-                    className={`px-4 py-2 mt-5 ml-3 rounded-md ${renderingText === '' ? 'bg-slate-300 cursor-not-allowed' : 'bg-[var(--ferrari-red)] text-white cursor-pointer'}`}
-                    onClick={DownloadContent}
-                    disabled={renderingText === ''}
-                >
-                    Download
-                </button>
+            <div className='flex justify-center items-center flex-col'>
+                <div>
+                    <button
+                        className="bg-[var(--ferrari-red)] text-white px-4 py-2 mt-5 rounded-md"
+                        onClick={handleSubmit}
+                    >
+                        Check Docs
+                    </button>
+                    <button
+                        className={`px-4 py-2 mt-5 ml-3 rounded-md ${renderingText === '' ? 'bg-slate-300 cursor-not-allowed' : 'bg-[var(--ferrari-red)] text-white cursor-pointer'}`}
+                        onClick={DownloadContent}
+                        disabled={renderingText === ''}
+                    >
+                        Download
+                    </button>
+                </div>
+                <div>
+                    <button
+                        className="bg-[var(--ferrari-red)] text-white px-4 py-2 mt-5 rounded-md"
+                        onClick={SaveNote}
+                    >
+                        Save Note
+                    </button>
+                </div>
             </div>
         </div>
     )
