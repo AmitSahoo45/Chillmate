@@ -25,7 +25,7 @@ const EditTextNotes = () => {
     const getNote = async () => {
         try {
             setIsLoading(true)
-            const { data: { note } } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/${slug}`)
+            const { data: { note } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`)
             setHeader(note.header)
             setDesc(note.desc)
             setTags(note.tags.join(','))
@@ -86,7 +86,7 @@ const EditTextNotes = () => {
         const loadingToast = toast.info('Saving note...');
         try {
 
-            const { data: { note } } = await axios.patch(`https://backend-b7h6.onrender.com/v1/textnotes/${slug}`, {
+            const { data: { note } } = await axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`, {
                 header,
                 desc,
                 tags,

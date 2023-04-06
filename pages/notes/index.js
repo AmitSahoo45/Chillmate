@@ -20,7 +20,7 @@ const Notes = () => {
   const getNotes = async () => {
     try {
       setIsLoading(true)
-      const { data } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/all/${user.uid}`)
+      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/all/${user.uid}`)
       setNotes(data.notes)
       setIsLoading(false)
     } catch (error) {

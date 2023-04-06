@@ -99,7 +99,7 @@ const NewNote = () => {
             if (user.isPresent) {
                 const loadingToast = toast.info('Saving note...');
 
-                await axios.post(`https://backend-b7h6.onrender.com/v1/textnotes/create`, {
+                await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/create`, {
                     header,
                     desc,
                     tags,

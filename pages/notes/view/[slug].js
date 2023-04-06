@@ -22,7 +22,7 @@ const NotesView = () => {
     const getNote = async () => {
         try {
             if (slug) {
-                const { data: { note } } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/${slug}`)
+                const { data: { note } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`)
                 let content = note.content
 
                 content = content
