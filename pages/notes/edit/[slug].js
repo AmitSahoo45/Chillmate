@@ -26,7 +26,6 @@ const EditTextNotes = () => {
         try {
             setIsLoading(true)
             const { data: { note } } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/${slug}`)
-            console.log(note)
             setHeader(note.header)
             setDesc(note.desc)
             setTags(note.tags.join(','))
@@ -71,7 +70,7 @@ const EditTextNotes = () => {
 
             return sanitizedText;
         } catch (error) {
-            console.log(error);
+            toast.error('Oops! Something went wrong.')
             sanitizedText = text;
             toast.error('Oops! Something went wrong.')
         }
@@ -81,8 +80,6 @@ const EditTextNotes = () => {
         e.preventDefault();
         const sanitizedText = sanitizeText(EditNote);
         setrenderingText(sanitizedText);
-
-        console.log("NoteRef", NoteRef.current);
     };
 
     const SaveNote = async () => {

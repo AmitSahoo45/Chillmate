@@ -21,31 +21,33 @@ const NotesView = () => {
 
     const getNote = async () => {
         try {
-            const { data: { note } } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/${slug}`)
-            let content = note.content
+            if (slug) {
+                const { data: { note } } = await axios.get(`https://backend-b7h6.onrender.com/v1/textnotes/${slug}`)
+                let content = note.content
 
-            content = content
-                .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
-                .replace(/\$n+/g, function (match) {
-                    return '<br>'.repeat(match.length - 1);
+                content = content
+                    .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
+                    .replace(/\$n+/g, function (match) {
+                        return '<br>'.repeat(match.length - 1);
+                    })
+                    .replace(/\$t+/g, function (match) {
+                        return '&nbsp;'.repeat(match.length * 4);
+                    })
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                    .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                    .replace(/~(.*?)~/g, '<s>$1</s>')
+                    .replace(/__(.*?)__/g, '<u>$1</u>')
+                    .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
+                    .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>');
+
+                setrenderingText(content)
+
+                setNote({
+                    header: note.header,
+                    desc: note.desc,
+                    tags: note.tags.join(','),
                 })
-                .replace(/\$t+/g, function (match) {
-                    return '&nbsp;'.repeat(match.length * 4);
-                })
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                .replace(/\*(.*?)\*/g, '<i>$1</i>')
-                .replace(/~(.*?)~/g, '<s>$1</s>')
-                .replace(/__(.*?)__/g, '<u>$1</u>')
-                .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
-                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>');
-
-            setrenderingText(content)
-
-            setNote({
-                header: note.header,
-                desc: note.desc,
-                tags: note.tags.join(','),
-            })
+            }
         } catch (error) {
             toast.error(error.response.data.message)
         }
@@ -53,7 +55,7 @@ const NotesView = () => {
 
     useEffect(() => {
         getNote()
-    }, [user]);
+    }, [user, slug]);
 
     return (
         <div className='w-4/5 mx-auto my-5'>

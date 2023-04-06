@@ -7,6 +7,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { app } from '../../constants/Firebase/firebaseClient'
 import { Avatar } from '../../components'
 import { ContextStore } from '../../constants/context/Context'
+import { toast } from 'react-toastify'
 
 const Navbar = () => {
     const provider = new GoogleAuthProvider();
@@ -33,10 +34,9 @@ const Navbar = () => {
                     photoURL: result.user.photoURL,
                     uid: result.user.uid
                 }))
-                console.log(user)
             })
             .catch((error) => {
-                console.log(error)
+                toast.error(error.message)
             });
     }
 
@@ -53,7 +53,7 @@ const Navbar = () => {
                 localStorage.removeItem('CHILLMATE')
             })
             .catch((error) => {
-                console.log(error)
+                toast.error(error.message)
             });
     }
 

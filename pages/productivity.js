@@ -10,6 +10,7 @@ import { database } from '../constants/Firebase/firebaseClient';
 import { ContextStore } from '../constants/context/Context';
 
 import "react-circular-progressbar/dist/styles.css";
+import { toast } from 'react-toastify';
 
 const Productivity = () => {
     const [isSettingsOn, setIsSettingsOn] = useState(false);
@@ -40,8 +41,9 @@ const Productivity = () => {
             });
             setTaskHook(!taskHook)
             setInputText('')
+            toast.success('Task added')
         } catch (error) {
-            console.log(error)
+            toast.error(error.message)
         }
     }
 
@@ -53,8 +55,9 @@ const Productivity = () => {
         try {
             await deleteDoc(doc(database, "users", user.uid, "tasks", id));
             setTaskHook(!taskHook)
+            toast.success('Task deleted')
         } catch (error) {
-            console.log(error)
+            toast.error(error.message)
         }
     }
 

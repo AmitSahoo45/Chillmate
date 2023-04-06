@@ -7,6 +7,7 @@ import { app } from '../../constants/Firebase/firebaseClient'
 import Loader from '../Loader/Loader';
 import { ContextStore } from '../../constants/context/Context'
 import styles from '../../styles/AudioCard.module.css'
+import { toast } from 'react-toastify';
 
 const FileRoots = {
     rain: '/audio/rain.mp3',
@@ -61,7 +62,7 @@ const AudioCard = props => {
                 audio.play();
                 setLoading(false)
             }).catch((error) => {
-                console.log(error)
+                toast.error('Oops! Something went wrong. Pls refresh the page.')
             });
         }
         else {

@@ -28,6 +28,11 @@ const Notes = () => {
     }
   }
 
+  const CopyURL = (id) => {
+    navigator.clipboard.writeText(`http://localhost:3000/notes/view/${id}`)
+    toast.success('Copied to clipboard')
+  }
+
   useEffect(() => {
     if (user.isPresent)
       getNotes()
@@ -91,7 +96,10 @@ const Notes = () => {
                               onClick={() => router.push(`/notes/edit/${note._id}`)}
                             />
                             <RiDeleteBin3Line className='ml-3 text-lg cursor-pointer' />
-                            <RiShareLine className='ml-3 text-lg cursor-pointer' />
+                            <RiShareLine
+                              className='ml-3 text-lg cursor-pointer'
+                              onClick={() => CopyURL(note._id)}
+                            />
                             <RiEyeFill
                               className='ml-3 text-lg cursor-pointer mr-2'
                               onClick={() => router.push(`/notes/view/${note._id}`)}
