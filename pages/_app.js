@@ -1,5 +1,10 @@
+import dynamic from 'next/dynamic'
+
+const Navbar = dynamic(() => import('../components/Navbar/Navbar'), { ssr: false })
+const Footer = dynamic(() => import('../components/Footer/Footer'), { ssr: false })
+const Alert = dynamic(() => import('../components/Alert/Alert'), { ssr: false })
+
 import '../styles/globals.css'
-import { Navbar, Footer, Alert } from '../components'
 import { ProviderContext } from '../constants/context/Context'
 
 function MyApp({ Component, pageProps }) {
