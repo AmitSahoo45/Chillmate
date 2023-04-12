@@ -48,7 +48,10 @@ const NewNote = () => {
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/~(.*?)~/g, '<s>$1</s>')
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
-                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>');
+                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
+                .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
+                    return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
+                });
 
 
             return sanitizedText;

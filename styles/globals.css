@@ -167,3 +167,17 @@ a {
     @apply bg-[var(--orange)] text-[var(--ecru-white)];
   }
 }
+
+.header-text {
+  background-image: linear-gradient(var(--orange), var(--orange));
+  background-size: 100% 10px;
+  background-repeat: no-repeat;
+  background-position: 100% 50%;
+  transition: background-size .7s, background-position .5s ease-in-out;
+}
+
+.header-text:hover {
+  background-size: 100% 100%;
+  background-position: 0% 100%;
+  transition: background-position .7s, background-size .5s ease-in-out;
+}

@@ -2,41 +2,51 @@ import React, { useContext, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link';
 import Head from 'next/head';
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from 'next/router';
-import axios from 'axios';
 import { RiPencilFill, RiDeleteBin3Line, RiShareLine, RiEyeFill } from 'react-icons/ri'
 import { toast } from 'react-toastify';
 
-import { Loader } from '../../components'
-import { ContextStore } from '../../constants/context/Context';
+import { getNotes, selectNotes, selectError } from '../../../store/slices/Notes'
+import { Loader } from '../../../components'
+import { ContextStore } from '../../../constants/context/Context';
 
 const Notes = () => {
   const [notes, setNotes] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
+  const dispatch = useDispatch();
   const router = useRouter()
+
+  const { TextNotes, loading, error } = useSelector(selectNotes)
+
+  const { slug } = router.query
   const { user } = useContext(ContextStore)
 
-  const getNotes = async () => {
-    try {
-      setIsLoading(true)
-      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/all/${user.uid}`)
-      setNotes(data.notes)
-      setIsLoading(false)
-    } catch (error) {
-      toast.error('Failed to fetch notes')
-    }
-  }
-
   const CopyURL = (id) => {
-    navigator.clipboard.writeText(`http://localhost:3000/notes/view/${id}`)
+    navigator.clipboard.writeText(`https://chillmate.vercel.app/notes/view/${id}`)
     toast.success('Copied to clipboard')
   }
 
   useEffect(() => {
-    if (user.isPresent)
-      getNotes()
-  }, [user])
+    if (user.isPresent && slug)
+      dispatch(getNotes(slug))
+  }, [user.isPresent, slug])
+
+  useEffect(() => {
+    if (error)
+      toast.error(error)
+
+    if (loading)
+      setIsLoading(true)
+    else
+      setIsLoading(false)
+  }, [error, loading]);
+
+  useEffect(() => {
+    if (TextNotes)
+      setNotes(TextNotes.notes)
+  }, [TextNotes])
 
   return (
     <>
@@ -76,9 +86,10 @@ const Notes = () => {
                   isLoading ?
                     <div className="mt-5">
                       <Loader />
+                      <p className='text-center text-lg'>Please wait while we load your Notes</p>
                     </div>
                     :
-                    notes.length == 0 ?
+                    notes?.length == 0 ?
                       <div className="mt-3">
                         <p className='text-center text-theme-ferrari-red text-lg'>
                           You have no notes yet
@@ -93,7 +104,7 @@ const Notes = () => {
                           <div className='flex'>
                             <RiPencilFill
                               className='ml-2 text-lg cursor-pointer'
-                              onClick={() => router.push(`/notes/edit/${note._id}`)}
+                              onClick={() => router.push(`/subject/notes/edit/${note._id}`)}
                             />
                             <RiDeleteBin3Line className='ml-3 text-lg cursor-pointer' />
                             <RiShareLine
@@ -102,7 +113,7 @@ const Notes = () => {
                             />
                             <RiEyeFill
                               className='ml-3 text-lg cursor-pointer mr-2'
-                              onClick={() => router.push(`/notes/view/${note._id}`)}
+                              onClick={() => router.push(`/subject/notes/view/${note._id}`)}
                             />
                           </div>
                         </div>

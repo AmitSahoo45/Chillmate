@@ -80,7 +80,7 @@ const LandingPage = () => {
                                 </p>
                                 <button
                                     className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                    onClick={() => router.push('/notes')}
+                                    onClick={() => router.push('/subject')}
                                 >Make Notes</button>
                             </div>
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">

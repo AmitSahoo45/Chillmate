@@ -3,10 +3,10 @@ import Head from 'next/head';
 import { useRouter } from 'next/router'
 import DOMPurify from 'dompurify';
 import axios from 'axios'
-
-import { Loader } from '../../../components';
-import { ContextStore } from '../../../constants/context/Context';
 import { toast } from 'react-toastify';
+
+import { Loader } from '../../../../components';
+import { ContextStore } from '../../../../constants/context/Context';
 
 const EditTextNotes = () => {
     const router = useRouter()
@@ -17,6 +17,7 @@ const EditTextNotes = () => {
     const [tags, setTags] = useState('');
     const [EditNote, setEditNote] = useState('');
     const [renderingText, setrenderingText] = useState('');
+    const [subject, setSubject] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const NoteRef = useRef(null);
 
@@ -30,8 +31,10 @@ const EditTextNotes = () => {
             setDesc(note.desc)
             setTags(note.tags.join(','))
             setEditNote(note.content)
+            setSubject(note.Subject)
             setIsLoading(false)
         } catch (error) {
+            console.log(error)
             toast.error('Failed to fetch note. Pls refresh')
         }
     }
@@ -66,7 +69,10 @@ const EditTextNotes = () => {
                 .replace(/~(.*?)~/g, '<s>$1</s>')
                 .replace(/__(.*?)__/g, '<u>$1</u>')
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
-                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>');
+                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
+                .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
+                    return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
+                });
 
             return sanitizedText;
         } catch (error) {
@@ -97,7 +103,7 @@ const EditTextNotes = () => {
             toast.dismiss(loadingToast);
             toast.success('Note saved successfully');
 
-            router.push('/notes');
+            router.push(`/subject/notes/${subject}`);
         } catch (error) {
             toast.dismiss(loadingToast);
             toast.error(error.response.data.message);
@@ -105,8 +111,11 @@ const EditTextNotes = () => {
     };
 
     useEffect(() => {
-        getNote()
-    }, [user]);
+        if (slug)
+            getNote()
+
+        console.log(slug)
+    }, [slug]);
 
     return (
         <div className='flex flex-col my-5 relative'>
