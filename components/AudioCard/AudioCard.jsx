@@ -38,7 +38,7 @@ const AudioCard = props => {
             else if (isAudioPlaying && isPlaying)
                 audio.play();
         }
-    }, [isAudioPlaying, isPlaying])
+    }, [isAudioPlaying, isPlaying, audio])
 
     useEffect(() => {
         if (audio) {
@@ -47,7 +47,7 @@ const AudioCard = props => {
             else
                 audio.pause()
         }
-    }, [isPlaying])
+    }, [isPlaying, audio, isAudioPlaying])
 
     const toggleActive = () => {
         if (!audio) {

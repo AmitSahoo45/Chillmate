@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf"
 import axios from 'axios';
 import { useRouter } from 'next/router'
 
-import { ContextStore } from '../../constants/context/Context';
+import { ContextStore } from '../../../constants/context/Context';
 
 const NewNote = () => {
     const router = useRouter()

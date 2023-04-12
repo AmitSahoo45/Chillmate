@@ -113,9 +113,8 @@ const EditTextNotes = () => {
     useEffect(() => {
         if (slug)
             getNote()
-
-        console.log(slug)
     }, [slug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <div className='flex flex-col my-5 relative'>

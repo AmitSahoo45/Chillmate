@@ -64,6 +64,7 @@ const NotesView = () => {
         if (slug)
             getNote()
     }, [user, slug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <div className='w-4/5 mx-auto my-5'>

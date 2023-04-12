@@ -25,7 +25,8 @@ const Subject = () => {
         if (user.isPresent && !subjects.isFetching && chapters?.length == 0)
             dispatch(getSubjects(user.uid));
     }, [user.isPresent]);
-
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setChapters(subjects.subjects);
     }, [subjects]);

@@ -56,7 +56,8 @@ const Navbar = () => {
                 toast.error(error.message)
             });
     }
-
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('CHILLMATE'))
         console.log(user)

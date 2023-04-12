@@ -32,7 +32,7 @@ const Notes = () => {
     if (user.isPresent && slug)
       dispatch(getNotes(slug))
   }, [user.isPresent, slug])
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (error)
       toast.error(error)
