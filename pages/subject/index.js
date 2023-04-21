@@ -55,8 +55,8 @@ const Subject = () => {
     }
 
     const CopyURL = (id) => {
-        // navigator.clipboard.writeText(`https://chillmate.vercel.app/subject/share/${id}`)
-        navigator.clipboard.writeText(`http://localhost:3000/subject/notes/${id}`)
+        navigator.clipboard.writeText(`https://chillmate.vercel.app/subject/share/${id}`)
+        // navigator.clipboard.writeText(`http://localhost:3000/subject/notes/${id}`)
         toast.success('Copied to clipboard')
     }
 
