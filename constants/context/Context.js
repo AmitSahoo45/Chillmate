@@ -26,7 +26,7 @@ const ProviderContext = ({ children }) => {
                 isAudioPlaying, setisAudioPlaying,
                 isResetSettings, setisResetSettings,
                 user, setUser,
-                formData, setFormData
+                formData, setFormData,
             }}>
             {children}
         </ContextStore.Provider>

@@ -12,6 +12,11 @@ export const getSubjects = createAsyncThunk('subject/all', async (id) => {
     return data;
 })
 
+export const deleteSubject = createAsyncThunk('subject/delete', async (id) => {
+    const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/${id}`)
+    return data;
+})
+
 const subjectSlice = createSlice({
     name: 'subject',
     initialState,

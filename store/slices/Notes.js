@@ -12,32 +12,36 @@ export const getNotes = createAsyncThunk('notes/all', async (id) => {
     return data;
 })
 
+export const deleteNotes = createAsyncThunk('notes/delete', async (id) => {
+    const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${id}`)
+    return data;
+})
+
 const notesSlice = createSlice({
     name: 'notes',
     initialState,
-    reducers: {},
-    extraReducers: {
-        [getNotes.pending]: (state, action) => {
-            state.loading = true;
-        },
-        [getNotes.fulfilled]: (state, action) => {
-            state.loading = false;
-            state.Notes = action.payload;
-        },
-        [getNotes.rejected]: (state, action) => {
-            state.loading = false;
-            state.error = action.error.message;
+    reducers: {
+        removeNote: (state, action) => {
+            state.Notes = state.Notes.filter((note) => note._id !== action.payload)
         }
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(getNotes.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getNotes.fulfilled, (state, action) => {
+                state.loading = false;
+                state.Notes = action.payload;
+            })
+            .addCase(getNotes.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.error.message;
+            })
     }
 });
 
-export const selectNotes = state => {
-    return {
-        TextNotes: state.notes.Notes,
-        loading: state.notes.loading,
-        error: state.notes.error
-    }
-}
+export const selectNotes = state => state.notes.Notes
 
 
 export default notesSlice.reducer;

@@ -11,6 +11,9 @@ const NotesView = () => {
     const { slug } = router.query
     const { user } = useContext(ContextStore)
 
+    const IsPresent = 'border-theme-ferrari-red bg-transparent'
+    const IsNotPresent = 'bg-slate-200 cursor-not-allowed'
+
     const [Note, setNote] = useState({
         userGleID: '',
         header: '',
@@ -21,8 +24,6 @@ const NotesView = () => {
     const [renderingText, setrenderingText] = useState('');
     const NoteRef = useRef(null)
 
-    console.log('userGleID - ', Note.userGleID, ' - uid - ', user?.uid)
-    console.log(Note.userGleID == user?.uid)
     const getNote = async () => {
         try {
             const { data: { note } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`)
@@ -75,19 +76,14 @@ const NotesView = () => {
                 <h1 className='text-2xl font-bold'>{Note.header}</h1>
                 <div className='flex items-center'>
                     <button
-                        className={`
-                        px-4 py-2 rounded-md mr-4 
-                        ${Note.userGleID != user?.uid} ? ' border-theme-ferrari-red bg-transparent':
-                        ' bg-slate-200 cursor-not-allowed'
-                        `}
+                        className={`px-4 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
                         onClick={() => router.push(`/subject/notes/edit/${slug}`)}
                         disabled={Note.userGleID != user?.uid}
                     >Edit</button>
-                    <button
-                        className={`px-4 py-2 rounded-md
-                    ${Note.userGleID != user?.uid} ? 
-                    ' bg-red-500':
-                    ' bg-slate-200 cursor-not-allowed'`}>Delete</button>
+                    <button className={`px-4 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
+                    >
+                        Delete
+                    </button>
                 </div>
             </div>
             <div className='flex flex-col mt-2'>
@@ -96,6 +92,23 @@ const NotesView = () => {
                     {Note.tags.split(',').map((tag, index) => (
                         <span key={index} className='bg-gray-100 px-2 py-1 rounded-sm mr-2 text-theme-forest-green'>{tag}</span>
                     ))}
+                </div>
+                <div className='mt-4 flex items-center'>
+                    <p className='mb-2 text-sm mr-2'>From : </p>
+                    <div className="flex items-center">
+                        <div
+                            className="inline-flex items-center justify-center rounded-full bg-gray-300 overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.1)]"
+                            style={{ width: 35, height: 35 }}
+                        >
+                            <img
+                                src={Note.UserRef.photoURL}
+                                alt={Note.UserRef.name}
+                                aria-hidden="true"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <span className='ml-3 text-sm'>{Note.UserRef.name}</span>
+                    </div>
                 </div>
             </div>
             <hr className='my-5' />

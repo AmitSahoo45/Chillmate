@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import Head from 'next/head';
 import { useRouter } from 'next/router'
 import DOMPurify from 'dompurify';
 import axios from 'axios'
@@ -7,6 +6,7 @@ import { toast } from 'react-toastify';
 
 import { Loader } from '../../../../components';
 import { ContextStore } from '../../../../constants/context/Context';
+import Head from 'next/head';
 
 const EditTextNotes = () => {
     const router = useRouter()
@@ -34,7 +34,6 @@ const EditTextNotes = () => {
             setSubject(note.Subject)
             setIsLoading(false)
         } catch (error) {
-            console.log(error)
             toast.error('Failed to fetch note. Pls refresh')
         }
     }
@@ -119,7 +118,7 @@ const EditTextNotes = () => {
     return (
         <div className='flex flex-col my-5 relative'>
             <Head>
-                <title>Edit Note</title>
+                <title>Edit Note | {subject}</title>
             </Head>
             <h3 className='text-theme-ferrari-red text-xl border-b-2 border-theme-ferrari-red text-center mb-3 font-poppins w-4/5 mx-auto'>
                 <span className='font-medium text-3xl'>E</span>dit&nbsp;

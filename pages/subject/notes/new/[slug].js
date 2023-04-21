@@ -1,15 +1,16 @@
-import React, { useContext, useRef, useState } from 'react'
-import Head from 'next/head';
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify';
 import DOMPurify from 'dompurify';
 import { jsPDF } from "jspdf"
 import axios from 'axios';
 import { useRouter } from 'next/router'
 
-import { ContextStore } from '../../../constants/context/Context';
+import { ContextStore } from '../../../../constants/context/Context';
+import Head from 'next/head';
 
 const NewNote = () => {
     const router = useRouter()
+    const { slug } = router.query
 
     const [header, setHeader] = useState('');
     const [desc, setDesc] = useState('');
@@ -108,6 +109,7 @@ const NewNote = () => {
                     tags,
                     content: note,
                     userGleID: user.uid,
+                    Subject: slug,
                     name: user.name,
                     photoURL: user.photoURL,
                     email: user.email,
@@ -117,7 +119,7 @@ const NewNote = () => {
                 toast.dismiss(loadingToast);
                 toast.success('Note saved successfully');
 
-                router.push('/notes');
+                router.push(`/subject/notes/${slug}`);
             }
         } catch (error) {
             toast.error(error.response.data.message)

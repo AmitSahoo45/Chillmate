@@ -28,7 +28,6 @@ const LandingPage = () => {
                     <div className='w-4/5 mx-auto sm:mx-0'>
                         <p>Get away from the busy world and develop your own relaxing environment.</p>
                     </div>
-
                 </div>
             </section>
             <section className='w-4/5 mx-auto my-3'>
