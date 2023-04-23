@@ -60,7 +60,7 @@ const ShareSubject = () => {
             <Head>
                 <title>{subject?.Subname} | ChillMate</title>
             </Head>
-            <main className='mx-auto container'>
+            <main className='sm:mx-auto container px-4'>
                 <div className='flex flex-col justify-center my-5'>
                     <h1 className='text-xl text-gray-800 leading-loose border-b-2 w-4/5 mb-3 border-theme-orange font-medium'>{subject?.Subname}</h1>
                     <h3 className='whitespace-pre-line text-gray-700 mb-4'>{subject?.Subdesc}</h3>
