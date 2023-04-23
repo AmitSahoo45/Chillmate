@@ -51,7 +51,7 @@ const ShareSubject = () => {
     }
 
     useEffect(() => {
-        if (user.isPresent && slug)
+        if (user.isPresent || slug)
             fetchSubject(slug)
     }, [user.isPresent, slug])
 
