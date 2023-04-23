@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 
 import { ContextStore } from '../../../../constants/context/Context'
 import axios from 'axios'
+import jsPDF from 'jspdf'
 
 const NotesView = () => {
     const router = useRouter()
@@ -61,6 +62,29 @@ const NotesView = () => {
         }
     }
 
+    const DownloadContent = () => {
+        try {
+            const doc = new jsPDF({
+                orientation: "l",
+                unit: "px",
+                format: [1200, 500],
+                fontSize: 10
+            });
+            
+            doc.html(NoteRef.current, {
+                callback: function (doc) {
+                    doc.save(`${Note.header}.pdf`);
+                },
+                x: 30,
+                y: 30,
+                putOnlyUsedFonts: true,
+            });
+        }
+        catch (err) {
+            toast.error('Something went wrong');
+        }
+    }
+
     useEffect(() => {
         if (slug)
             getNote()
@@ -70,20 +94,23 @@ const NotesView = () => {
     return (
         <div className='w-4/5 mx-auto my-5'>
             <Head>
-                <title>{Note.header}</title>
+                <title>{Note.header} | Note - Chillmate</title>
+                <meta name="description" content="Chillmate. The ultimate productivity tool for programmers." />
+                <link rel="icon" href="/favicon.ico" />
             </Head>
             <div className='flex justify-between items-center'>
                 <h1 className='text-2xl font-bold'>{Note.header}</h1>
                 <div className='flex items-center'>
                     <button
-                        className={`px-4 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
+                        className={`px-3 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
                         onClick={() => router.push(`/subject/notes/edit/${slug}`)}
                         disabled={Note.userGleID != user?.uid}
                     >Edit</button>
-                    <button className={`px-4 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
+                    <button className={`px-3 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
                     >
                         Delete
                     </button>
+                    <button className='px-3 py-2 rounded-md mr-4 bg-theme-orange text-white' onClick={DownloadContent}>Download</button>
                 </div>
             </div>
             <div className='flex flex-col mt-2'>

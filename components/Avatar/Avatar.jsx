@@ -7,7 +7,7 @@ const Avatar = ({ src, alt, size = 40 }) => {
             <img
                 src={src}
                 alt={alt}
-                className="object-cover object-center w-[50px] h-[50px] border" 
+                className="object-cover object-center" 
             />
         </div>
     );

@@ -40,7 +40,7 @@ const Notes = () => {
   const { user } = useContext(ContextStore)
 
   const CopyURL = (id) => {
-    navigator.clipboard.writeText(`https://chillmate.vercel.app/notes/view/${id}`)
+    navigator.clipboard.writeText(`https://chillmate.vercel.app/subject/notes/view/${id}`)
     toast.success('Copied to clipboard')
   }
 
