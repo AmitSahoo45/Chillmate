@@ -3,7 +3,12 @@ import { TbBrandTwitter, TbBrandLinkedin, TbBrandGithub, TbBrandChrome } from 'r
 
 const Footer = () => {
     return (
-        <footer className="flex justify-center items-center w-full h-16 bg-theme-ecru-white">
+        <footer className="flex justify-center flex-col items-center w-full bg-theme-ecru-white mb-4">
+            <p className='my-3'>Built with <span className="text-red-500">❤</span> by &nbsp;
+                <a href="http://amit-kumar-sahoo.netlify.app/" target="_blank" rel="noreferrer" className="text-theme-ferrari-red hover:underline">
+                    Amit Kumar Sahoo
+                </a>
+            </p>
             <div className="flex justify-center items-center space-x-4 text-gray-500">
                 <a href="https://www.linkedin.com/in/amit-kumar-sahoo-web/" target="_blank" rel="noreferrer">
                     <TbBrandLinkedin className='text-2xl' />
