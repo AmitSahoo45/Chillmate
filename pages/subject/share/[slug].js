@@ -91,7 +91,7 @@ const ShareSubject = () => {
                                     >Share</button>
                                 </div>
                                 <p className='text-gray-500 flex items-center text-sm'>
-                                    By: {note.UserRef?.name} on {moment(note.createdAt).format('DD MMM YYYY')}
+                                    Created on {moment(note.createdAt).format('DD MMM YYYY')}
                                 </p>
                             </div>
                         ))}
