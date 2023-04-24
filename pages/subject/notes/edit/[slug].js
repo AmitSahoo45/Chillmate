@@ -1,12 +1,28 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
+import Head from 'next/head';
 import { useRouter } from 'next/router'
 import DOMPurify from 'dompurify';
 import axios from 'axios'
 import { toast } from 'react-toastify';
+import Modal from 'react-modal';
+import { AiOutlineClose } from 'react-icons/ai'
 
 import { Loader } from '../../../../components';
 import { ContextStore } from '../../../../constants/context/Context';
-import Head from 'next/head';
+
+const customStyles = {
+    content: {
+        top: '50%',
+        left: '50%',
+        right: 'auto',
+        bottom: 'auto',
+        marginRight: '-50%',
+        transform: 'translate(-50%, -50%)',
+        width: '80%',
+    },
+}
+
+Modal.setAppElement('#__next')
 
 const EditTextNotes = () => {
     const router = useRouter()
@@ -19,6 +35,7 @@ const EditTextNotes = () => {
     const [renderingText, setrenderingText] = useState('');
     const [subject, setSubject] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [modalIsOpen, setIsOpen] = useState(false)
     const NoteRef = useRef(null);
 
     const { user } = useContext(ContextStore)
@@ -109,6 +126,8 @@ const EditTextNotes = () => {
         }
     };
 
+    const toggleModal = () => setIsOpen(!modalIsOpen)
+
     useEffect(() => {
         if (slug)
             getNote()
@@ -169,6 +188,9 @@ const EditTextNotes = () => {
                                     onChange={(e) => setTags(e.target.value)}
                                 />
                             </div>
+                            <p className="text-red-500 mt-3">
+                                For documentation on how to create notes, please click on the docs button on the bottom right of your screen
+                            </p>
                         </div>
                         <div className="border-t-2 border-[var(--ferrari-red)] mx-auto w-full mt-8"></div>
                         <div className='flex'>
@@ -212,6 +234,122 @@ const EditTextNotes = () => {
                                 Save Note
                             </button>
                         </div>
+                        <div className="fixed right-11 bottom-11">
+                            <button
+                                className="bg-[var(--ferrari-red)] text-white mt-5 rounded-full h-14 w-14"
+                                onClick={toggleModal}
+                            >
+                                Docs
+                            </button>
+                        </div>
+                        <Modal
+                            isOpen={modalIsOpen}
+                            onRequestClose={toggleModal}
+                            style={customStyles}
+                            contentLabel="Example Modal"
+                        >
+                            <div className='flex flex-col w-full'>
+                                <div className="flex justify-between items-center px-5">
+                                    <h3 className='font-montserrat'>Docs</h3>
+                                    <button
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <AiOutlineClose />
+                                    </button>
+                                </div>
+                                <div>
+                                    <div class="relative overflow-x-auto">
+                                        <table class="w-full text-sm text-left">
+                                            <thead class="text-xs ">
+                                                <tr>
+                                                    <td scope="col" class="px-6 py-2">
+                                                        Syntax
+                                                    </td>
+                                                    <td scope="col" class="px-6 py-2">
+                                                        Meaning
+                                                    </td>
+                                                </tr>
+                                            </thead>
+                                            <tbody className='text-xs'>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        $n+
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        Replaces all instances of `$n+` with <code className='text-red-600'>br</code> tags, where `n+` is any number.
+                                                        For eg. $nn will be replaced with <code className='text-red-600'>br</code> tags twice.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        $t+
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        Replaces all instances of `$t+` with <code className='text-red-600'>4 tabular space</code> tags, where `t+` is any number. For eg. $tt will be replaced with <code className='text-red-600'>8 tabular space</code> tags twice.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        **bold**
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        will bold the text between the two asterisks.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        *italic*
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        will italicize the text between the two asterisks.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        ***bold and italics***
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        will bold and italicize the text between the three asterisks.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        ~strikethrough~
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        will strikethrough the text between the two tildes.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        &color&..text...&color&
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        will color the text between the two ampersands with the color specified in the first ampersand.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        #heading
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        used for heading tags. The number of hashtags determines the heading tag. For eg. ###heading will be replaced with <code className='text-red-600'>h3</code> tag.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td scope="row" class="px-6 py-2">
+                                                        |u|..text...|u|
+                                                    </td>
+                                                    <td class="px-6 py-2">
+                                                        will underline the text between the two pipes.
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </Modal>
                     </>
             }
         </div>

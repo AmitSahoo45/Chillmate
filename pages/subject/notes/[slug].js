@@ -11,6 +11,7 @@ import Modal from 'react-modal';
 import { getNotes, selectNotes, deleteNotes } from '../../../store/slices/Notes'
 import { Loader } from '../../../components'
 import { ContextStore } from '../../../constants/context/Context';
+import moment from 'moment/moment';
 
 const customStyles = {
   content: {
@@ -131,7 +132,7 @@ const Notes = () => {
                         <div>
                           <h3 className='font-montserrat text-lg'>{note.header}</h3>
                           <p className='font-montserrat text-sm'>{note.desc.substring(0, 70)}....</p>
-                          <p className="text-xs mt-2">{note.UserRef.name}</p>
+                          <p className="text-xs mt-2">{moment(note.createdAt).format("dddd MMM Do YY")}</p>
                         </div>
                         <div className='flex'>
                           {note.userGleID == user.uid &&

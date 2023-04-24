@@ -29,7 +29,7 @@ const NotesView = () => {
         try {
             const { data: { note } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`)
             let content = note.content
-            console.log(note)
+            console.log(note.createdAt)
             content = content
                 .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
                 .replace(/\$n+/g, function (match) {
