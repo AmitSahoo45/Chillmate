@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { ContextStore } from '../../../../constants/context/Context'
 import axios from 'axios'
 import jsPDF from 'jspdf'
+import moment from 'moment/moment'
 
 const NotesView = () => {
     const router = useRouter()
@@ -20,7 +21,8 @@ const NotesView = () => {
         header: '',
         desc: '',
         tags: '',
-        UserRef: {}
+        UserRef: {},
+        createdAt: ''
     })
     const [renderingText, setrenderingText] = useState('');
     const NoteRef = useRef(null)
@@ -29,7 +31,7 @@ const NotesView = () => {
         try {
             const { data: { note } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`)
             let content = note.content
-            console.log(note.createdAt)
+            console.log(note)
             content = content
                 .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
                 .replace(/\$n+/g, function (match) {
@@ -56,6 +58,7 @@ const NotesView = () => {
                 desc: note.desc,
                 tags: note.tags.join(','),
                 UserRef: note.UserRef,
+                createdAt: note.createdAt
             })
         } catch (error) {
             toast.error(error.response.data.message)
@@ -70,7 +73,7 @@ const NotesView = () => {
                 format: [1200, 500],
                 fontSize: 10
             });
-            
+
             doc.html(NoteRef.current, {
                 callback: function (doc) {
                     doc.save(`${Note.header}.pdf`);
@@ -135,6 +138,9 @@ const NotesView = () => {
                             />
                         </div>
                         <span className='ml-3 text-sm'>{Note.UserRef.name}</span>
+                        <span className='ml-3 text-sm'>
+                            on {moment(Note.createdAt).format('DD MMMM YYYY')}
+                        </span>
                     </div>
                 </div>
             </div>
