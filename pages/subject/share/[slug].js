@@ -79,12 +79,8 @@ const ShareSubject = () => {
                                 <div>
                                     <button
                                         className='bg-theme-orange text-white px-2 py-1 rounded shadow-md mr-2 text-xs mb-2'
-                                        onClick={() => DownloadContent(note._id)}
-                                    >Download</button>
-                                    <button
-                                        className='bg-theme-orange text-white px-2 py-1 rounded shadow-md mr-2 text-xs mb-2'
                                         onClick={() => router.push(`/subject/notes/view/${note._id}`)}
-                                    >View</button>
+                                    >View and Download</button>
                                     <button
                                         className='bg-theme-orange text-white px-2 py-1 rounded shadow-md mr-2 text-xs mb-2'
                                         onClick={() => CopyURL(note._id)}
