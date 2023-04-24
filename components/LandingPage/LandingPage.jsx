@@ -26,7 +26,7 @@ const LandingPage = () => {
                         </h1>
                     </header>
                     <div className='w-4/5 mx-auto sm:mx-0'>
-                        <p>Get away from the busy world and develop your own relaxing environment.</p>
+                        <p>The ultimate productivity tool for developers and students</p>
                     </div>
                 </div>
             </section>
