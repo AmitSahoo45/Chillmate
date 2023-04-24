@@ -34,7 +34,7 @@ const LandingPage = () => {
                 <h1 className="sm:text-xl text-sm font-montserrat mb-1 mt text-gray-900">The Tools we provide</h1>
                 <div className="h-[3px] w-32 bg-theme-ferrari-red rounded mb-4"></div>
                 <section className="text-gray-600 body-font">
-                    <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col">
+                    <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col-reverse">
                         <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
                             <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Nature Sounds</h2>
                             <p className="leading-relaxed text-base">Immerse yourself in a focused and tranquil coding experience with our integrated soothing background sounds. Boost your productivity and eliminate distractions with our easy-to-use productivity tool. Say goodbye to scattered thoughts and hello to enhanced efficiency and relaxation.</p>
@@ -71,7 +71,7 @@ const LandingPage = () => {
                         </div>
                     </div>
                     <div className="container px-5 py-24 mx-auto">
-                        <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col">
+                        <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col-reverse">
                             <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
                                 <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Threaded Notes</h2>
                                 <p className="leading-relaxed text-base">
@@ -90,7 +90,7 @@ const LandingPage = () => {
                                 />
                             </div>
                         </div>
-                        <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col-reverse">
+                        <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col">
                             <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
                                 <Image src='/assets/images/lofi.svg'
                                     alt="Nature Sounds"

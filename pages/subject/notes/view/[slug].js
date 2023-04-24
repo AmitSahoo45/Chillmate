@@ -97,13 +97,13 @@ const NotesView = () => {
     return (
         <div className='w-4/5 mx-auto my-5'>
             <Head>
-                <title>{Note.header} | Note - Chillmate</title>
+                <title>Note - Chillmate | {Note.header}</title>
                 <meta name="description" content="Chillmate. The ultimate productivity tool for programmers." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className='flex justify-between items-center'>
+            <div className='flex justify-between items-center flex-col sm:flex-row'>
                 <h1 className='text-2xl font-bold'>{Note.header}</h1>
-                <div className='flex items-center'>
+                <div className='flex items-center my-3 sm:mt-0'>
                     <button
                         className={`px-3 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
                         onClick={() => router.push(`/subject/notes/edit/${slug}`)}
@@ -118,13 +118,13 @@ const NotesView = () => {
             </div>
             <div className='flex flex-col mt-2'>
                 <p className='text-sm'>{Note.desc}</p>
-                <div className='text-sm mt-3'>
+                <div className='text-sm mt-3 flex flex-wrap'>
                     {Note.tags.split(',').map((tag, index) => (
-                        <span key={index} className='bg-gray-100 px-2 py-1 rounded-sm mr-2 text-theme-forest-green'>{tag}</span>
+                        <span key={index} className='bg-gray-100 px-2 py-1 rounded-sm mr-2 mt-2 sm:mt-0 text-theme-forest-green'>{tag}</span>
                     ))}
                 </div>
-                <div className='mt-4 flex items-center'>
-                    <p className='mb-2 text-sm mr-2'>From : </p>
+                <div className='mt-4 flex items-center flex-wrap sm:flex-nowrap'>
+                    <p className='mb-2 text-sm mr-2'>Created by : </p>
                     <div className="flex items-center">
                         <div
                             className="inline-flex items-center justify-center rounded-full bg-gray-300 overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.1)]"

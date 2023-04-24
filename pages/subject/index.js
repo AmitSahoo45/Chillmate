@@ -92,7 +92,7 @@ const Subject = () => {
                                         chapters.map((chapter, index) => (
                                             <div
                                                 key={index}
-                                                className='flex flex-row justify-between p-3 shadow-md rounded-sm mb-3'>
+                                                className='flex flex-col justify-between p-3 shadow-md rounded-sm mb-3 sm:flex-row'>
                                                 <div>
                                                     <h4 className='text-lg'>{chapter.Subname}</h4>
                                                     <div className='border-b border-theme-ferrari-red my-1'></div>
@@ -106,7 +106,7 @@ const Subject = () => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <div className='flex justify-center items-center'>
+                                                <div className='flex justify-center items-center my-3 sm:my-0'>
                                                     <BsPencilFill
                                                         onClick={() => router.push(`/subject/${chapter._id}/edit`)}
                                                         className='mr-3 hover:cursor-pointer' />
@@ -132,7 +132,7 @@ const Subject = () => {
                                         </div>
                                     ) :
                                     <div className='flex items-center flex-col justify-center'>
-                                        <p className='mb-4'>Please wait while we fetch your notes</p>
+                                        <p className='mb-4'>Please Sign In</p>
                                         <Loader />
                                     </div>
                                 }
