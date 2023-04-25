@@ -141,7 +141,11 @@ const EditTextNotes = () => {
     return (
         <div className='flex flex-col my-5 relative'>
             <Head>
-                <title>Edit Note | {subject}</title>
+                <title>Edit Note | {header}</title>
+                <meta property="og:title" content={`Edit Note | ${header}`} />
+                <meta property="og:description" content={desc} />
+                <meta property="og:image" content={EditNote} />
+                <meta property="og:url" content={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/subject/notes/${slug}`} />
             </Head>
             <h3 className='text-theme-ferrari-red text-xl border-b-2 border-theme-ferrari-red text-center mb-3 font-poppins w-4/5 mx-auto'>
                 <span className='font-medium text-3xl'>E</span>dit&nbsp;
