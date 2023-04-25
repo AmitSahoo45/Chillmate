@@ -10,14 +10,6 @@ import { Loader } from '../../../../components'
 import { ContextStore } from '../../../../constants/context/Context'
 
 const NotesView = ({ note }) => {
-    if (!note) {
-        return (
-            <div className="my-2 flex flex-col items-center justify-center">
-                <p className="my-3">Oops!!! Something went wrong. Please refresh this page</p>
-                <Loader />
-            </div>
-        )
-    }
     const router = useRouter()
     const { slug } = router.query
     const { user } = useContext(ContextStore)
@@ -26,14 +18,14 @@ const NotesView = ({ note }) => {
     const IsNotPresent = 'bg-slate-200 cursor-not-allowed'
 
     const [Note, setNote] = useState({
-        userGleID: note.userGleID,
-        header: note.header,
-        desc: note.desc,
-        tags: note.tags.join(','),
-        UserRef: note.UserRef,
-        createdAt: note.createdAt
+        userGleID: '',
+        header: '',
+        desc: '',
+        tags: '',
+        UserRef: {},
+        createdAt: ''
     })
-    const [renderingText, setrenderingText] = useState(note.content);
+    const [renderingText, setrenderingText] = useState('');
     const NoteRef = useRef(null)
 
     // const getNote = async () => {
@@ -100,10 +92,53 @@ const NotesView = ({ note }) => {
         }
     }
 
-    // useEffect(() => {
-    //     // if (slug)
-    //     //     getNote()
-    // }, [user, slug]);
+    const Convert = () => {
+        if (note) {
+            let content = note.content
+            console.log(note)
+            content = content
+                .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
+                .replace(/\$n+/g, function (match) {
+                    return '<br>'.repeat(match.length - 1);
+                })
+                .replace(/\$t+/g, function (match) {
+                    return '&nbsp;'.repeat(match.length * 4);
+                })
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                .replace(/~(.*?)~/g, '<s>$1</s>')
+                .replace(/__(.*?)__/g, '<u>$1</u>')
+                .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
+                .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
+                .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
+                    return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
+                })
+                .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            setrenderingText(content)
+
+            setNote({
+                userGleID: note.userGleID,
+                header: note.header,
+                desc: note.desc,
+                tags: note.tags.join(','),
+                UserRef: note.UserRef,
+                createdAt: note.createdAt
+            })
+        }
+    }
+
+    if (!note) {
+        return (
+            <div className="my-2 flex flex-col items-center justify-center">
+                <p className="my-3">Oops!!! Something went wrong. Please refresh this page</p>
+                <Loader />
+            </div>)
+    }
+
+    useEffect(() => {
+        Convert()
+    }, [user, slug]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
@@ -116,8 +151,7 @@ const NotesView = ({ note }) => {
                 <meta property="og:url" content={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/v1/textnotes/${slug}`} />
                 <meta property="og:type" content="website" />
             </Head>
-            {
-                note &&
+            {note &&
                 <main>
                     <div className='flex justify-between items-center flex-col sm:flex-row'>
                         <h1 className='text-2xl font-bold'>{Note.header}</h1>
