@@ -144,10 +144,10 @@ const NotesView = ({ note }) => {
     return (
         <div className='w-4/5 mx-auto my-5'>
             <Head>
-                <title>Note - Chillmate | {Note.header}</title>
-                <meta property="og:title" content={`Note - Chillmate | ${Note.header}`} />
-                <meta property="og:description" content={Note.desc} />
-                <meta property="og:image" content={Note.UserRef?.profilePic} />
+                <title>Note - Chillmate | {note.header}</title>
+                <meta property="og:title" content={`Note - Chillmate | ${note.header}`} />
+                <meta property="og:description" content={note.desc} />
+                <meta property="og:image" content={note.UserRef?.profilePic} />
                 <meta property="og:url" content={`https://chillmate.vercel.app/subject/notes/view/${slug}`} />
                 <meta property="og:type" content="website" />
             </Head>
