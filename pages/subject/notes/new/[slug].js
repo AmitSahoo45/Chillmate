@@ -39,12 +39,13 @@ const NewNote = () => {
     const { user } = useContext(ContextStore)
 
     const sanitizeText = (text) => {
-        const allowedTags = ['b', 'i', 'u', 'span', 'br'];
+        const allowedTags = ['b', 'i', 'u', 'span', 'br', 'code'];
         const allowedAttributes = {
             'span': ['style', 'color'],
             'b': [],
             'i': [],
-            'u': []
+            'u': [],
+            'code': ['*']
         };
 
         let sanitizedText
@@ -55,7 +56,8 @@ const NewNote = () => {
                 ALLOWED_ATTR: allowedAttributes
             });
 
-            sanitizedText = sanitizedText.replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
+            sanitizedText = sanitizedText
+                .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
                 .replace(/\$n+/g, function (match) {
                     return '<br>'.repeat(match.length - 1);
                 })
@@ -65,11 +67,13 @@ const NewNote = () => {
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/~(.*?)~/g, '<s>$1</s>')
+                .replace(/__(.*?)__/g, '<u>$1</u>')
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
                     return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
-                });
+                })
+                .replace(/`([^`]+)`/g, '<code>$1</code>');
 
 
             return sanitizedText;
@@ -218,7 +222,7 @@ const NewNote = () => {
                     {/* Rendering Part */}
                     <div className="flex-[0.5] p-2 h-[500px] overflow-y-scroll scrollbar-hidden">
                         <div
-                            className='font-poppins'
+                            className='font-poppins whitespace-pre-line'
                             ref={NoteRef}
                             dangerouslySetInnerHTML={{ __html: renderingText }}
                         >

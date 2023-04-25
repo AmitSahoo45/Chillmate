@@ -2,18 +2,19 @@ import React, { useState, useRef, useContext, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
-
-import { ContextStore } from '../../../../constants/context/Context'
 import axios from 'axios'
 import jsPDF from 'jspdf'
 import moment from 'moment/moment'
+
+import { Loader } from '../../../../components'
+import { ContextStore } from '../../../../constants/context/Context'
 
 const NotesView = () => {
     const router = useRouter()
     const { slug } = router.query
     const { user } = useContext(ContextStore)
 
-    const IsPresent = 'border-theme-ferrari-red bg-transparent'
+    const IsPresent = 'bg-theme-orange text-white'
     const IsNotPresent = 'bg-slate-200 cursor-not-allowed'
 
     const [Note, setNote] = useState({
@@ -25,10 +26,12 @@ const NotesView = () => {
         createdAt: ''
     })
     const [renderingText, setrenderingText] = useState('');
+    const [isLoading, setIsLoading] = useState(false)
     const NoteRef = useRef(null)
 
     const getNote = async () => {
         try {
+            setIsLoading(true)
             const { data: { note } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/textnotes/${slug}`)
             let content = note.content
             console.log(note)
@@ -48,7 +51,8 @@ const NotesView = () => {
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
                     return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
-                });
+                })
+                .replace(/`([^`]+)`/g, '<code>$1</code>');
 
             setrenderingText(content)
 
@@ -60,6 +64,7 @@ const NotesView = () => {
                 UserRef: note.UserRef,
                 createdAt: note.createdAt
             })
+            setIsLoading(false)
         } catch (error) {
             toast.error(error.response.data.message)
         }
@@ -101,56 +106,68 @@ const NotesView = () => {
                 <meta name="description" content="Chillmate. The ultimate productivity tool for programmers." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className='flex justify-between items-center flex-col sm:flex-row'>
-                <h1 className='text-2xl font-bold'>{Note.header}</h1>
-                <div className='flex items-center my-3 sm:mt-0'>
-                    <button
-                        className={`px-3 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
-                        onClick={() => router.push(`/subject/notes/edit/${slug}`)}
-                        disabled={Note.userGleID != user?.uid}
-                    >Edit</button>
-                    <button className={`px-3 py-2 rounded-md mr-4 ${Note.userGleID != user?.uid} ? ${IsPresent} : ${IsNotPresent}`}
-                    >
-                        Delete
-                    </button>
-                    <button className='px-3 py-2 rounded-md mr-4 bg-theme-orange text-white' onClick={DownloadContent}>Download</button>
-                </div>
+
+            {isLoading && <div className="my-2 flex flex-col items-center justify-center">
+                <p className="my-3">Please wait while we load your content</p>
+                <Loader />
             </div>
-            <div className='flex flex-col mt-2'>
-                <p className='text-sm'>{Note.desc}</p>
-                <div className='text-sm mt-3 flex flex-wrap'>
-                    {Note.tags.split(',').map((tag, index) => (
-                        <span key={index} className='bg-gray-100 px-2 py-1 rounded-sm mr-2 mt-2 sm:mt-0 text-theme-forest-green'>{tag}</span>
-                    ))}
-                </div>
-                <div className='mt-4 flex items-center flex-wrap sm:flex-nowrap'>
-                    <p className='mb-2 text-sm mr-2'>Created by : </p>
-                    <div className="flex items-center">
-                        <div
-                            className="inline-flex items-center justify-center rounded-full bg-gray-300 overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.1)]"
-                            style={{ width: 35, height: 35 }}
+            }
+            <main>
+                <div className='flex justify-between items-center flex-col sm:flex-row'>
+                    <h1 className='text-2xl font-bold'>{Note.header}</h1>
+                    <div className='flex items-center my-3 sm:mt-0'>
+                        <button
+                            className={`px-3 py-2 rounded-md mr-4 
+                            ${Note.userGleID != user?.uid ? IsNotPresent : IsPresent}`}
+                            onClick={() => router.push(`/subject/notes/edit/${slug}`)}
+                            disabled={Note.userGleID != user?.uid}
+                        >Edit</button>
+                        <button
+                            disabled={Note.userGleID != user?.uid}
+                            className={`px-3 py-2 rounded-md mr-4 
+                            ${Note.userGleID != user?.uid ? IsNotPresent : IsPresent}`}
                         >
-                            <img
-                                src={Note.UserRef.photoURL}
-                                alt={Note.UserRef.name}
-                                aria-hidden="true"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <span className='ml-3 text-sm'>{Note.UserRef.name}</span>
-                        <span className='ml-3 text-sm'>
-                            on {moment(Note.createdAt).format('DD MMMM YYYY')}
-                        </span>
+                            Delete
+                        </button>
+                        <button className='px-3 py-2 rounded-md mr-4 bg-theme-orange text-white' onClick={DownloadContent}>Download</button>
                     </div>
                 </div>
-            </div>
-            <hr className='my-5' />
-            <div
-                className='font-poppins'
-                ref={NoteRef}
-                dangerouslySetInnerHTML={{ __html: renderingText }}
-            >
-            </div>
+                <div className='flex flex-col mt-2'>
+                    <p className='text-sm'>{Note.desc}</p>
+                    <div className='text-sm mt-3 flex flex-wrap'>
+                        {Note.tags.split(',').map((tag, index) => (
+                            <span key={index} className='bg-gray-100 px-2 py-1 rounded-sm mr-2 mt-2 sm:mt-0 text-theme-forest-green'>{tag}</span>
+                        ))}
+                    </div>
+                    <div className='mt-4 flex items-center flex-wrap sm:flex-nowrap'>
+                        <p className='mb-2 text-sm mr-2'>Created by : </p>
+                        <div className="flex items-center">
+                            <div
+                                className="inline-flex items-center justify-center rounded-full bg-gray-300 overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.1)]"
+                                style={{ width: 35, height: 35 }}
+                            >
+                                <img
+                                    src={Note.UserRef.photoURL}
+                                    alt={Note.UserRef.name}
+                                    aria-hidden="true"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            <span className='ml-3 text-sm'>{Note.UserRef.name}</span>
+                            <span className='ml-3 text-sm'>
+                                on {moment(Note.createdAt).format('DD MMMM YYYY')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <hr className='my-5' />
+                <div
+                    className='font-poppins whitespace-pre-line'
+                    ref={NoteRef}
+                    dangerouslySetInnerHTML={{ __html: renderingText }}
+                >
+                </div>
+            </main>
         </div>
     )
 }

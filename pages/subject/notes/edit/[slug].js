@@ -56,12 +56,13 @@ const EditTextNotes = () => {
     }
 
     const sanitizeText = (text) => {
-        const allowedTags = ['b', 'i', 'u', 'span', 'br'];
+        const allowedTags = ['b', 'i', 'u', 'span', 'br', 'code'];
         const allowedAttributes = {
             'span': ['style', 'color'],
             'b': [],
             'i': [],
-            'u': []
+            'u': [],
+            'code': ['*']
         };
 
         let sanitizedText
@@ -71,6 +72,8 @@ const EditTextNotes = () => {
                 ALLOWED_TAGS: allowedTags,
                 ALLOWED_ATTR: allowedAttributes
             });
+
+            sanitizedText = text
 
             sanitizedText = sanitizedText
                 .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
@@ -88,7 +91,8 @@ const EditTextNotes = () => {
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
                     return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
-                });
+                })
+                .replace(/`([^`]+)`/g, '<code>$1</code>');
 
             return sanitizedText;
         } catch (error) {
@@ -212,7 +216,7 @@ const EditTextNotes = () => {
                             {/* Rendering Part */}
                             <div className="flex-[0.5] p-2 h-[500px] overflow-y-scroll scrollbar-hidden">
                                 <div
-                                    className='font-poppins'
+                                    className='font-poppins whitespace-pre-line'
                                     ref={NoteRef}
                                     dangerouslySetInnerHTML={{ __html: renderingText }}
                                 >
