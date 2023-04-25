@@ -148,7 +148,7 @@ const NotesView = ({ note }) => {
                 <meta property="og:title" content={`Note - Chillmate | ${Note.header}`} />
                 <meta property="og:description" content={Note.desc} />
                 <meta property="og:image" content={Note.UserRef?.profilePic} />
-                <meta property="og:url" content={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/v1/textnotes/${slug}`} />
+                <meta property="og:url" content={`https://chillmate.vercel.app/subject/notes/view/${slug}`} />
                 <meta property="og:type" content="website" />
             </Head>
             {note &&
