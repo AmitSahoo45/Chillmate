@@ -128,6 +128,11 @@ const NotesView = ({ note }) => {
         }
     }
 
+    useEffect(() => {
+        Convert()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, slug]);
+
     if (!note) {
         return (
             <div className="my-2 flex flex-col items-center justify-center">
@@ -135,11 +140,6 @@ const NotesView = ({ note }) => {
                 <Loader />
             </div>)
     }
-
-    useEffect(() => {
-        Convert()
-    }, [user, slug]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return (
         <div className='w-4/5 mx-auto my-5'>
