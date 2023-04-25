@@ -145,7 +145,7 @@ const NotesView = ({ note }) => {
         <div className='w-4/5 mx-auto my-5'>
             <Head>
                 <title>Note - Chillmate | {Note.header}</title>
-                <meta property="og:title" content={`Edit Note | ${Note.header}`} />
+                <meta property="og:title" content={`Note - Chillmate | ${Note.header}`} />
                 <meta property="og:description" content={Note.desc} />
                 <meta property="og:image" content={Note.UserRef?.profilePic} />
                 <meta property="og:url" content={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/v1/textnotes/${slug}`} />
