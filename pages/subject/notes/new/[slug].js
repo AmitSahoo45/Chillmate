@@ -67,13 +67,15 @@ const NewNote = () => {
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/~(.*?)~/g, '<s>$1</s>')
-                .replace(/__(.*?)__/g, '<u>$1</u>')
+                // .replace(/__(.*?)__/g, '<u>$1</u>')
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
                     return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
                 })
-                .replace(/`([^`]+)`/g, '<code>$1</code>');
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+                    "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>");
 
 
             return sanitizedText;

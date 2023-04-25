@@ -8,7 +8,7 @@ import jsPDF from 'jspdf'
 
 import { ContextStore } from '../../../constants/context/Context'
 
-const ShareSubject = () => {
+const ShareSubject = ({ Subject, Notes }) => {
     const router = useRouter()
     const { slug } = router.query
     const { user } = useContext(ContextStore)
@@ -19,29 +19,10 @@ const ShareSubject = () => {
     const fetchSubject = async (id) => {
         try {
             const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/share/${id}`)
-            console.log(data)
             setSubject(data.subject)
             setNotes(data.notes)
         } catch (error) {
             toast.error(error.message)
-        }
-    }
-
-    const DownloadContent = async (id) => {
-        try {
-            const { data: { content: { content } } } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/content/${id}`)
-            // download content as a pdf using jspdf
-            const doc = new jsPDF('l', 'mm', [1200, 1210]);
-            doc.html(content, {
-                callback: function (doc) {
-                    doc.save(`${subject.Subname}.pdf`);
-                },
-                x: 10,
-                y: 10
-            });
-        }
-        catch (err) {
-            toast.error(err.message);
         }
     }
 
@@ -97,5 +78,28 @@ const ShareSubject = () => {
         </>
     )
 }
+
+export const getServerSideProps = async (context) => {
+    const { slug } = context.query;
+    console.log(slug)
+    try {
+        const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/share/${slug}`)
+        console.log(data)
+        return {
+            props: {
+                subject: data.subject,
+                notes: data.notes
+            }
+        }
+    } catch (error) {
+        return {
+            props: {
+                Subject: null,
+                Notes: []
+            }
+        }
+    }
+}
+
 
 export default ShareSubject

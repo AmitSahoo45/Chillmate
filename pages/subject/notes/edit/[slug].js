@@ -56,13 +56,19 @@ const EditTextNotes = () => {
     }
 
     const sanitizeText = (text) => {
-        const allowedTags = ['b', 'i', 'u', 'span', 'br', 'code'];
+        const allowedTags = ['b', 'i', 'u', 'span', 'br', 'code', 'table', 'tbody', 'thead', 'tr', 'th', 'td'];
         const allowedAttributes = {
             'span': ['style', 'color'],
             'b': [],
             'i': [],
             'u': [],
-            'code': ['*']
+            'code': ['*'],
+            'table': ['class'],
+            'tbody': ['class'],
+            'thead': ['class'],
+            'tr': ['class'],
+            'th': ['class'],
+            'td': ['class']
         };
 
         let sanitizedText
@@ -70,9 +76,9 @@ const EditTextNotes = () => {
         try {
             sanitizedText = DOMPurify.sanitize(text, {
                 ALLOWED_TAGS: allowedTags,
-                ALLOWED_ATTR: allowedAttributes
+                ALLOWED_ATTR: allowedAttributes,
+                ADD_TAGS: ['tbody', 'thead']
             });
-
             sanitizedText = text
 
             sanitizedText = sanitizedText
@@ -92,7 +98,12 @@ const EditTextNotes = () => {
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
                     return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
                 })
-                .replace(/`([^`]+)`/g, '<code>$1</code>');
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+                    "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
+                .replace(/\|(.+)\|/g, (_, p1) => `<tr>${p1.trim().split('|').map(cell => `<td>${cell.trim()}</td>`).join('')}</tr>`)
+                .replace(/<tr>/g, '<tbody>').replace(/<\/td>\s*<\/tr>/g, '</td></tr></tbody>')
+
 
             return sanitizedText;
         } catch (error) {
