@@ -67,7 +67,7 @@ const NewNote = () => {
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                 .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/~(.*?)~/g, '<s>$1</s>')
-                // .replace(/__(.*?)__/g, '<u>$1</u>')
+                .replace(/__(.*?)__/g, '<u>$1</u>')
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
@@ -75,7 +75,8 @@ const NewNote = () => {
                 })
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-                    "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>");
+                    "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
+                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full"></div>');
 
 
             return sanitizedText;
@@ -274,18 +275,15 @@ const NewNote = () => {
                 contentLabel="Example Modal"
             >
                 <div className='flex flex-col w-full'>
-                    <div className="flex justify-between items-center px-5">
-                        <h3 className='font-montserrat'>Docs</h3>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                        >
+                    <div className="flex justify-end items-center px-5 text-xl">
+                        <button onClick={() => setIsOpen(false)}>
                             <AiOutlineClose />
                         </button>
                     </div>
                     <div>
                         <div class="relative overflow-x-auto">
                             <table class="w-full text-sm text-left">
-                                <thead class="text-xs ">
+                                <thead>
                                     <tr>
                                         <td scope="col" class="px-6 py-2">
                                             Syntax
@@ -296,15 +294,6 @@ const NewNote = () => {
                                     </tr>
                                 </thead>
                                 <tbody className='text-xs'>
-                                    <tr>
-                                        <td scope="row" class="px-6 py-2">
-                                            $n+
-                                        </td>
-                                        <td class="px-6 py-2">
-                                            Replaces all instances of `$n+` with <code className='text-red-600'>br</code> tags, where `n+` is any number.
-                                            For eg. $nn will be replaced with <code className='text-red-600'>br</code> tags twice.
-                                        </td>
-                                    </tr>
                                     <tr>
                                         <td scope="row" class="px-6 py-2">
                                             $t+
@@ -367,6 +356,30 @@ const NewNote = () => {
                                         </td>
                                         <td class="px-6 py-2">
                                             will underline the text between the two pipes.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td scope="row" class="px-6 py-2">
+                                            [link](url)
+                                        </td>
+                                        <td class="px-6 py-2">
+                                            will create a link with the text between the square brackets and the url between the parentheses.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td scope="row" class="px-6 py-2">
+                                            --b--
+                                        </td>
+                                        <td class="px-6 py-2">
+                                            will create a horizontal line.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td scope="row" class="px-6 py-2">
+                                            `code`
+                                        </td>
+                                        <td class="px-6 py-2">
+                                            will create a code block.
                                         </td>
                                     </tr>
                                 </tbody>
