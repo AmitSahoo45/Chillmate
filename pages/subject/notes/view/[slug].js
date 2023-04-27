@@ -113,7 +113,10 @@ const NotesView = ({ note }) => {
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
                     return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
                 })
-                .replace(/`([^`]+)`/g, '<code>$1</code>');
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+                    "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
+                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full"></div>');
 
             setrenderingText(content)
 
