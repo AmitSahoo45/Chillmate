@@ -131,7 +131,10 @@ const Notes = () => {
                       <div key={note._id} className='flex rounded-md items-center justify-between p-4 my-1 sm:my-2 w-full shadow-md shadow-slate-200 transition-all hover:shadow-theme-orange hover:shadow-sm flex-col sm:flex-row'>
                         <div>
                           <h3 className='font-montserrat text-lg'>{note.header}</h3>
-                          <p className='font-montserrat text-sm'>{note.desc.substring(0, 70)}....</p>
+                          <p className='font-montserrat text-sm'>
+                            {note.desc.substring(0, 70)}
+                            {note.desc.length > 70 && '...'}
+                            </p>
                           <p className="text-xs mt-2">{moment(note.createdAt).format("dddd MMM Do YY")}</p>
                         </div>
                         <div className='flex my-3 sm:my-0'>

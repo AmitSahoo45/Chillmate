@@ -57,7 +57,9 @@ const NewNote = () => {
             });
 
             sanitizedText = sanitizedText
-                .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
+                .replace(/&r(.*?)&r/g, '<span style="color:#ff0000">$1</span>')
+                .replace(/&y(.*?)&y/g, '<span style="color:#fdff32">$1</span>')
+                .replace(/&g(.*?)&g/g, '<span style="color:#39FF14">$1</span>')
                 .replace(/\$n+/g, function (match) {
                     return '<br>'.repeat(match.length - 1);
                 })
@@ -76,7 +78,7 @@ const NewNote = () => {
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
                     "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
-                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full"></div>');
+                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full mt-3"></div>');
 
 
             return sanitizedText;

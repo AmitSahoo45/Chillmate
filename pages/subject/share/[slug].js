@@ -66,7 +66,10 @@ const ShareSubject = ({ Notes, Subject }) => {
                                     <div key={note._id} className='flex flex-col justify-center my-3 border p-3 rounded shadow-lg'>
                                         <h1 className='text-xl text-gray-800 leading-loose border-b-2 w-4/5 mb-2 border-theme-orange font-medium'>{note.header}
                                         </h1>
-                                        <h3 className='whitespace-pre-line text-gray-700 mb-1'>{note.desc}</h3>
+                                        <h3 className='whitespace-pre-line text-gray-700 mb-1'>
+                                            {note.desc.substr(0, 160)}
+                                            {note.desc.length > 160 && '...'}
+                                        </h3>
                                         <div>
                                             <button
                                                 className='bg-theme-orange text-white px-2 py-1 rounded shadow-md mr-2 text-xs mb-2'

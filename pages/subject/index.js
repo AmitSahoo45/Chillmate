@@ -96,7 +96,10 @@ const Subject = () => {
                                                 <div>
                                                     <h4 className='text-lg'>{chapter.Subname}</h4>
                                                     <div className='border-b border-theme-ferrari-red my-1'></div>
-                                                    <p className="text-sm">{chapter.Subdesc.substr(0, 150)}...</p>
+                                                    <p className="text-sm">
+                                                        {chapter.Subdesc.substr(0, 150)}
+                                                        {chapter.Subdesc.length > 150 && '...'}
+                                                    </p>
                                                     <p>
                                                         <span className="text-xs text-gray-500">{moment(chapter.createdAt).format("dddd MMM Do YY")}</span>
                                                     </p>

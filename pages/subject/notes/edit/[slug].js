@@ -82,7 +82,9 @@ const EditTextNotes = () => {
             sanitizedText = text
 
             sanitizedText = sanitizedText
-                .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
+                .replace(/&r(.*?)&r/g, '<span style="color:#ff0000">$1</span>')
+                .replace(/&y(.*?)&y/g, '<span style="color:#fdff32">$1</span>')
+                .replace(/&g(.*?)&g/g, '<span style="color:#39FF14">$1</span>')
                 .replace(/\$n+/g, function (match) {
                     return '<br>'.repeat(match.length - 1);
                 })
@@ -101,8 +103,9 @@ const EditTextNotes = () => {
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
                     "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
-                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full"></div>');
+                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full mt-3"></div>');
 
+            // .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
             // .replace(/\|(.+)\|/g, (_, p1) => `<tr>${p1.trim().split('|').map(cell => `<td>${cell.trim()}</td>`).join('')}</tr>`)
             // .replace(/<tr>/g, '<tbody>').replace(/<\/td>\s*<\/tr>/g, '</td></tr></tbody>')
             // .replace(/<td>/g, '<td class="border border-gray-300 px-2 py-1">')
