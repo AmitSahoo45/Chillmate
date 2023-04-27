@@ -34,9 +34,9 @@ const ShareSubject = ({ Notes, Subject }) => {
     return (
         <>
             <Head>
-                <title>{subject?.Subname} | ChillMate</title>
-                <meta property="og:title" content={`Note - Chillmate | ${subject?.Subname}`} />
-                <meta name="og:description" content={subject?.Subdesc} />
+                <title>{Subject.Subname} | ChillMate</title>
+                <meta property="og:title" content={`Note - Chillmate | ${Subject.Subname}`} />
+                <meta name="og:description" content={Subject.Subdesc} />
                 <meta property="og:url" content={`https://chillmate.vercel.app/subject/share/${slug}`} />
                 <meta property="og:type" content="website" />
             </Head>
