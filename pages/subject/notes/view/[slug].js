@@ -144,7 +144,7 @@ const NotesView = ({ note }) => {
     return (
         <div className='w-4/5 mx-auto my-5'>
             <Head>
-                <title>Note - Chillmate | {note.header}</title>
+                <title>{note.header} | Chillmate</title>
                 <meta property="og:title" content={`Note - Chillmate | ${note.header}`} />
                 <meta property="og:description" content={note.desc} />
                 <meta property="og:image" content={note.UserRef?.profilePic} />
