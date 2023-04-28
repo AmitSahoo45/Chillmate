@@ -113,12 +113,14 @@ const NotesView = ({ note }) => {
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
-                    return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
+                    const size = p1.length * 0.5;
+                    return `<h${p1.length} style="font-size: ${size}rem">${p2.trim()}</h${p1.length}>`;
                 })
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
                     "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
-                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full mt-3"></div>');
+                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full mt-3"></div>')
+                .replace(/\|([^|]+)\|/g, '<u>$1</u>');
 
             setrenderingText(content)
 

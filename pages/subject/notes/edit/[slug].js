@@ -98,12 +98,14 @@ const EditTextNotes = () => {
                 .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
                 .replace(/\|u\|(.*?)\|u\|/g, '<u>$1</u>')
                 .replace(/^(#{1,6})\s*(.*?)$/gm, function (match, p1, p2) {
-                    return '<h' + p1.length + '>' + p2.trim() + '</h' + p1.length + '>';
+                    const size = p1.length * 0.5;
+                    return `<h${p1.length} style="font-size: ${size}rem">${p2.trim()}</h${p1.length}>`;
                 })
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
                     "<div class='text-theme-ferrari-red'><a href='$2' target='_blank' rel='noreferrer'>$1</a></div>")
-                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full mt-3"></div>');
+                .replace(/--b--/g, '<div class="border-t border-red-500 mx-auto w-full mt-3"></div>')
+                .replace(/\|([^|]+)\|/g, '<u>$1</u>');
 
             // .replace(/&([\w#]+)&(.*?)&\1&/g, '<span style="color:$1">$2</span>')
             // .replace(/\|(.+)\|/g, (_, p1) => `<tr>${p1.trim().split('|').map(cell => `<td>${cell.trim()}</td>`).join('')}</tr>`)
@@ -336,10 +338,10 @@ const EditTextNotes = () => {
                                                 </tr>
                                                 <tr>
                                                     <td scope="row" class="px-6 py-2">
-                                                        &color&..text...&color&
+                                                        &rtext&r or &gtext&g or &ytext&y
                                                     </td>
                                                     <td class="px-6 py-2">
-                                                        will color the text between the two ampersands with the color specified in the first ampersand.
+                                                        will color the text between the ampersand and the letter with the color of the letter. For eg. &rtext&r will color the text red.
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -347,12 +349,12 @@ const EditTextNotes = () => {
                                                         #heading
                                                     </td>
                                                     <td class="px-6 py-2">
-                                                        used for heading tags. The number of hashtags determines the heading tag. For eg. ###heading will be replaced with <code className='text-red-600'>h3</code> tag.
+                                                        used for headers. The number of #s will determine the font size of the header.
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td scope="row" class="px-6 py-2">
-                                                        |u|..text...|u|
+                                                        |text| or |u|text|u|
                                                     </td>
                                                     <td class="px-6 py-2">
                                                         will underline the text between the two pipes.
@@ -360,7 +362,7 @@ const EditTextNotes = () => {
                                                 </tr>
                                                 <tr>
                                                     <td scope="row" class="px-6 py-2">
-                                                        [link](url)
+                                                        [Text](url link)
                                                     </td>
                                                     <td class="px-6 py-2">
                                                         will create a link with the text between the square brackets and the url between the parentheses.
