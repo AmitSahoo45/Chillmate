@@ -107,6 +107,25 @@ const LandingPage = () => {
                                 >Listen Now</button>
                             </div>
                         </div>
+                        <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col-reverse">
+                            <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
+                                <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Job Application Tracker</h2>
+                                <p className="leading-relaxed text-base">
+                                    A powerful tool designed to streamline and simplify the job application process for employers. With our user-friendly interface and advanced search capabilities, employers can keeps a track of job listings, manage applications, and identify the most qualified candidates. Our app also offers a seamless experience for job seekers, providing them with a comprehensive database of job openings, personalized job recommendations, and easy application submission.
+                                </p>
+                                <button
+                                    className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
+                                    onClick={() => router.push('/jobtracker')}
+                                >Track Now</button>
+                            </div>
+                            <div className="sm:w-32 sm:h-32 h-28 w-28 sm:mr-10 inline-flex items-center justify-center rounded-full flex-shrink-0 relative">
+                                <Image src='/assets/images/nature.svg'
+                                    alt="Nature Sounds"
+                                    height={100}
+                                    width={100}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </section>
             </section>

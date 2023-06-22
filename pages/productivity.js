@@ -30,7 +30,7 @@ const Productivity = () => {
         }
 
         if (user.isPresent === false) {
-            alert('Please sign in to add a task')
+            toast.error('Please sign in to add a task')
             return
         }
         try {

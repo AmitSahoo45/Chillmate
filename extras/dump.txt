@@ -75,3 +75,54 @@
         <div class="fixed left-0 top-0 w-full h-10 bg-red-500 text-white flex justify-center items-center">
   <span class="mx-4">This is an alert message</span>
 </div>
+
+
+---------------------------------------------------------------------------------
+
+
+            switch (filterStatus) {
+                case 'all':
+                    const queryAll = await getDocs(collectionRef)
+                    const all = queryAll.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                    console.log(all)
+                    setYouapps(all)
+                    break;
+
+                case 'wishlist':
+                    const queryWishlist = await getDocs(collectionRef, where("status", "==", "wishlist"))
+                    const wishlist = queryWishlist.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                    console.log(wishlist)
+                    setYouapps(wishlist)
+                    break;
+
+                case 'applied':
+                    const queryApplied = await getDocs(collectionRef, where("status", "==", "applied"))
+                    const applied = queryApplied.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                    console.log(applied)
+                    setYouapps(applied)
+                    break;
+
+                case 'interview':
+                    const queryInterview = await getDocs(collectionRef, where("status", "==", "interview"))
+                    const interview = queryInterview.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                    console.log(interview)
+                    setYouapps(interview)
+                    break;
+
+                case 'offer':
+                    const queryOffer = await getDocs(collectionRef, where("status", "==", "offer"))
+                    const offer = queryOffer.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                    console.log(offer)
+                    setYouapps(offer)
+                    break;
+
+                case 'rejected':
+                    const queryRejected = await getDocs(collectionRef, where("status", "==", "rejected"))
+                    const rejected = queryRejected.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+                    console.log(rejected)
+                    setYouapps(rejected)
+                    break;
+
+                default:
+                    break;
+            }
