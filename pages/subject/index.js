@@ -56,7 +56,6 @@ const Subject = () => {
 
     const CopyURL = (id) => {
         navigator.clipboard.writeText(`https://chillmate.vercel.app/subject/share/${id}`)
-        // navigator.clipboard.writeText(`http://localhost:3000/subject/share/${id}`)
         toast.success('Copied to clipboard')
     }
 
@@ -75,7 +74,7 @@ const Subject = () => {
             <Head>
                 <title>Subject</title>
             </Head>
-            <div className='w-4/5 mx-auto my-5'>
+            <div className='w-4/5 mx-auto my-5 min-h-full'>
                 <div className='flex flex-col'>
                     <div className='flex flex-row justify-between'>
                         <h1 className='text-3xl font-bold header-text'>Subjects</h1>
@@ -87,53 +86,53 @@ const Subject = () => {
                     <div className='flex flex-row justify-between mt-5'>
                         <div className='flex flex-col w-full'>
                             <div className='flex flex-col mt-5 w-full'>
-                                {user?.isPresent ?
-                                    chapters?.length > 0 ? (
-                                        chapters.map((chapter, index) => (
-                                            <div
-                                                key={index}
-                                                className='flex flex-col justify-between p-3 shadow-md rounded-sm mb-3 sm:flex-row'>
-                                                <div>
-                                                    <h4 className='text-lg'>{chapter.Subname}</h4>
-                                                    <div className='border-b border-theme-ferrari-red my-1'></div>
-                                                    <p className="text-sm">
-                                                        {chapter.Subdesc.substr(0, 150)}
-                                                        {chapter.Subdesc.length > 150 && '...'}
-                                                    </p>
-                                                    <p>
-                                                        <span className="text-xs text-gray-500">{moment(chapter.createdAt).format("dddd MMM Do YY")}</span>
-                                                    </p>
-                                                    <div className="mt-3">
-                                                        {chapter.Subtags?.map((tag, index) => (
-                                                            <span key={index} className="inline-block bg-orange-100 rounded-full p-1 px-2 text-xs text-black mr-2 mb-2">{tag}</span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <div className='flex justify-center items-center my-3 sm:my-0'>
-                                                    <BsPencilFill
-                                                        onClick={() => router.push(`/subject/${chapter._id}/edit`)}
-                                                        className='mr-3 hover:cursor-pointer' />
-                                                    <BsEye
-                                                        className='mr-3 hover:cursor-pointer'
-                                                        onClick={() => router.push(`/subject/notes/${chapter._id}`)}
-                                                    />
-                                                    <AiOutlineDelete
-                                                        className='mr-3 hover:cursor-pointer'
-                                                        onClick={() => toggleModal(chapter._id)}
-                                                    />
-                                                    <AiOutlineShareAlt
-                                                        className='mr-3 hover:cursor-pointer'
-                                                        onClick={() => CopyURL(chapter._id)}
-                                                    />
+                                {(user.isPresent && chapters?.length > 0 ) ? (
+                                    chapters.map((chapter, index) => (
+                                        <div
+                                            key={index}
+                                            className='flex flex-col justify-between p-3 shadow-md rounded-sm mb-3 sm:flex-row'>
+                                            <div>
+                                                <h4 className='text-lg'>{chapter.Subname}</h4>
+                                                <div className='border-b border-theme-ferrari-red my-1'></div>
+                                                <p className="text-sm">
+                                                    {chapter.Subdesc.substr(0, 150)}
+                                                    {chapter.Subdesc.length > 150 && '...'}
+                                                </p>
+                                                <p>
+                                                    <span className="text-xs text-gray-500">{moment(chapter.createdAt).format("dddd MMM Do YY")}</span>
+                                                </p>
+                                                <div className="mt-3">
+                                                    {chapter.Subtags?.map((tag, index) => (
+                                                        <span key={index} className="inline-block bg-orange-100 rounded-full p-1 px-2 text-xs text-black mr-2 mb-2">{tag}</span>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className='flex items-center flex-col justify-center'>
-                                            <p className='mb-4'>No notes are available</p>
-                                            <Loader />
+                                            <div className='flex justify-center items-center my-3 sm:my-0'>
+                                                <BsPencilFill
+                                                    onClick={() => router.push(`/subject/${chapter._id}/edit`)}
+                                                    className='mr-3 hover:cursor-pointer' />
+                                                <BsEye
+                                                    className='mr-3 hover:cursor-pointer'
+                                                    onClick={() => router.push(`/subject/notes/${chapter._id}`)}
+                                                />
+                                                <AiOutlineDelete
+                                                    className='mr-3 hover:cursor-pointer'
+                                                    onClick={() => toggleModal(chapter._id)}
+                                                />
+                                                <AiOutlineShareAlt
+                                                    className='mr-3 hover:cursor-pointer'
+                                                    onClick={() => CopyURL(chapter._id)}
+                                                />
+                                            </div>
                                         </div>
-                                    ) :
+                                    ))
+                                ) : (
+                                    <div className='flex items-center flex-col justify-center'>
+                                        <p className='mb-4'>No notes are available</p>
+                                        <Loader />
+                                    </div>
+                                )}
+                                {!user.isPresent &&
                                     <div className='flex items-center flex-col justify-center'>
                                         <p className='mb-4'>Please Sign In</p>
                                         <Loader />

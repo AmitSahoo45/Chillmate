@@ -99,12 +99,12 @@ const LandingPage = () => {
                                 />
                             </div>
                             <div className="flex-grow sm:text-left text-center mt-6 sm:mt-0">
-                                <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Lofi & Chill</h2>
+                                <h2 className="text-gray-900 text-lg title-font font-medium mb-2">Error Sheet</h2>
                                 <p className="leading-relaxed text-base">Experience the soothing and calming sounds of Lofi Songs and improve your focus and productivity. Let our carefully curated selection of relaxing beats transport you to a state of mental clarity and tranquility, helping you stay on track and achieve your goals. With our integrated Pomodoro timer and convenient to-do list, you can eliminate distractions and make the most of your time. Say goodbye to stress and hello to a more productive and enjoyable workday with Lofi Songs.</p>
                                 <button
                                     className='bg-theme-orange text-white font-semibold py-[6px] px-4 rounded mt-3'
-                                    onClick={() => router.push('/chillSounds')}
-                                >Listen Now</button>
+                                    onClick={() => router.push('/errorsheet')}
+                                >Track them</button>
                             </div>
                         </div>
                         <div className="flex items-center lg:w-3/5 mx-auto border-b pb-10 mb-10 border-gray-200 sm:flex-row flex-col-reverse">

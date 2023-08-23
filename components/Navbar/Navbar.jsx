@@ -8,16 +8,17 @@ import { app } from '../../constants/Firebase/firebaseClient'
 import { Avatar } from '../../components'
 import { ContextStore } from '../../constants/context/Context'
 import { toast } from 'react-toastify'
+import axios from 'axios'
 
 const Navbar = () => {
     const provider = new GoogleAuthProvider();
     const auth = getAuth();
 
-    const { user, setUser } = useContext(ContextStore)
+    const { user, setUser, setId } = useContext(ContextStore)
 
     const signInWithGoogle = () => {
         signInWithPopup(auth, provider)
-            .then((result) => {
+            .then(async (result) => {
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 const token = credential.accessToken;
                 setUser({
@@ -32,8 +33,19 @@ const Navbar = () => {
                     name: result.user.displayName,
                     email: result.user.email,
                     photoURL: result.user.photoURL,
-                    uid: result.user.uid
+                    uid: result.user.uid,
+                    token: token
                 }))
+
+                const { data: { _id } } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/user/auth`, {
+                    name: result.user.displayName,
+                    email: result.user.email,
+                    photoURL: result.user.photoURL,
+                    googleID: result.user.uid
+                })
+
+                setId(_id)
+                localStorage.setItem('CHILLMATE_id', _id)
             })
             .catch((error) => {
                 toast.error(error.message)
@@ -50,18 +62,22 @@ const Navbar = () => {
                     photoURL: '',
                     uid: ''
                 })
+                setId('')
                 localStorage.removeItem('CHILLMATE')
+                localStorage.removeItem('CHILLMATE_id')
             })
             .catch((error) => {
                 toast.error(error.message)
             });
     }
-    
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('CHILLMATE'))
-        console.log(user)
+        const id = localStorage.getItem('CHILLMATE_id')
+        // console.log(user)
         if (user) setUser(user)
+        if (id) setId(id)
     }, []);
 
     return (

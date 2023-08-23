@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
 import Head from 'next/head'
-import { collection, getDocs, doc, addDoc, deleteDoc, query, where, updateDoc } from 'firebase/firestore'
+import { collection, getDocs, doc, addDoc, deleteDoc, query, where, updateDoc, or } from 'firebase/firestore'
 import { ContextStore } from '../constants/context/Context';
 
 import { Loader } from '../components'
 import { database } from '../constants/Firebase/firebaseClient';
 import { toast } from 'react-toastify';
-import { TbPencil, TbTrash } from 'react-icons/tb';
+import { TbPencil, TbTrash, TbSearch } from 'react-icons/tb';
 import moment from 'moment';
 
 const Jobtracker = () => {
@@ -23,6 +23,8 @@ const Jobtracker = () => {
     const [isEditing, setIsEditing] = useState(false)
     const [updateAppid, setUpdateAppid] = useState(0)
 
+    const [searchText, setSearchText] = useState('')
+
     const { user } = useContext(ContextStore)
 
     const getAllApplications = async () => {
@@ -31,7 +33,6 @@ const Jobtracker = () => {
                 const collectionRef = collection(database, "users", user.uid, "applications")
                 const querySnapshot = await getDocs(collectionRef)
                 const data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-                console.log(data)
                 setYouapps(data)
                 return;
             }
@@ -39,7 +40,6 @@ const Jobtracker = () => {
             const collectionRef = collection(database, "users", user.uid, "applications")
             const querySnapshot = await getDocs(query(collectionRef, where("status", "==", filterStatus)))
             const data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
-            console.log(data)
             setYouapps(data)
         } catch (error) {
             toast.error(error.message)
@@ -130,6 +130,27 @@ const Jobtracker = () => {
             setAppliedSwitch(!appliedSwitch)
         } catch (error) {
             console.log(error)
+            toast.error(error.message)
+        }
+    }
+
+    const searchJob = async () => {
+        try {
+            if (searchText === '') {
+                toast.error('Please enter a search term')
+                return;
+            }
+
+            searchText.trim()
+
+            const collectionRef = collection(database, "users", user.uid, "applications")
+            const searchQuery = query(collectionRef,
+                or(where("company", "==", searchText), where("position", "==", searchText))
+            );
+            const querySnapshot = await getDocs(searchQuery)
+            const data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+            console.log(data)
+        } catch (error) {
             toast.error(error.message)
         }
     }
@@ -236,24 +257,42 @@ const Jobtracker = () => {
                 <div className='border-theme-orange w-4/5 my-5 mx-auto border'></div>
                 <div className="container my-3 mx-auto">
                     <h3 className='text-center text-ellipsis font-poppins uppercase text-base font-thin'>Your Applications</h3>
-                    <div className='mx-auto sm:w-4/5 w-full text-center mt-4'>
-                        Filter By:
-
-                        <select
-                            name="status"
-                            id="status"
-                            className="border border-gray-300 rounded-md p-2 w-80 sm:ml-3 ml-0 sm:mt-0 mt-3"
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                            <option value="all">All</option>
-                            <option value="wishlist">Wishlist</option>
-                            <option value="applied">Applied</option>
-                            <option value="review">Under Review</option>
-                            <option value="interview">Interview</option>
-                            <option value="offer">Offer</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
+                    <div className='flex sm:flex-row flex-col mt-5'>
+                        <div className='flex justify-center items-center w-full'>
+                            <input
+                                type="text"
+                                name="search"
+                                id="search"
+                                className="border border-gray-300 rounded-md p-2 sm:mr-3 mr-0 sm:w-5/6 w-4/5"
+                                placeholder='Search by Company or Position'
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                            />
+                            <button
+                                className='bg-[var(--ferrari-red)] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--ferrari-red)] focus:ring-opacity-50 shadow-md p-3 ml-2'
+                                onClick={() => searchJob()}
+                            >
+                                <TbSearch />
+                            </button>
+                        </div>
+                        <div className='mx-auto sm:w-4/5 w-full text-center'>
+                            Filter By:
+                            <select
+                                name="status"
+                                id="status"
+                                className="border border-gray-300 rounded-md p-2 w-80 ml-3 sm:mt-0 mt-3"
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                            >
+                                <option value="all">All</option>
+                                <option value="wishlist">Wishlist</option>
+                                <option value="applied">Applied</option>
+                                <option value="review">Under Review</option>
+                                <option value="interview">Interview</option>
+                                <option value="offer">Offer</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div className="container my-3 mx-auto">
@@ -277,7 +316,7 @@ const Jobtracker = () => {
                                                 {youapp.company}
                                             </h4>
                                             <h4 className='sm:text-lg text-base font-normal'>
-                                                On <p className='text-theme-ferrari-red inline font-semibold'>{moment(youapp.dateApplied).format('MMM Do YY')}</p> you applied for <p className='text-theme-ferrari-red inline font-semibold'>{youapp.position}</p> position. <br/>
+                                                On <p className='text-theme-ferrari-red inline font-semibold'>{moment(youapp.dateApplied).format('MMM Do YY')}</p> you applied for <p className='text-theme-ferrari-red inline font-semibold'>{youapp.position}</p> position. <br />
                                                 This was <p className='text-theme-ferrari-red inline font-semibold'>{youapp.campus}</p> opportunity and as per your last update, the application status is <p className='text-theme-ferrari-red inline font-semibold'>{youapp.status}</p>.
                                             </h4>
                                             <div className='absolute top-3 right-3 flex justify-center items-center'>

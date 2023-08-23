@@ -19,6 +19,7 @@ const ProviderContext = ({ children }) => {
         shortBreakTime: stages.shortBreakTime / 60,
         longBreakTime: stages.longBreakTime / 60,
     })
+    const [id, setId] = useState('');
 
     return (
         <ContextStore.Provider
@@ -27,6 +28,7 @@ const ProviderContext = ({ children }) => {
                 isResetSettings, setisResetSettings,
                 user, setUser,
                 formData, setFormData,
+                id, setId
             }}>
             {children}
         </ContextStore.Provider>
