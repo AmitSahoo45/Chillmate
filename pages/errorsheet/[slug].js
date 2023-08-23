@@ -91,7 +91,7 @@ const ErrorSheetView = () => {
         openModal();
         setSheetModal(false);
     }
-
+    console.log(sheet?.UserRef?._id, id)
     const handleSheetModal = () => setSheetModal(!sheetModal)
 
     const isValidURL = (string) => {
@@ -100,6 +100,9 @@ const ErrorSheetView = () => {
     }
 
     const handleErrorSubmit = async (e) => {
+        if (id != slug)
+            return toast.error('You are not authorized to add error sheet for this user')
+
         e.preventDefault()
         try {
             if (probName === '' || probLink === '' || mistake === '' || improvement === '' || tags === '')
@@ -131,6 +134,9 @@ const ErrorSheetView = () => {
 
     const updateErrorSheet = () => {
         try {
+            if (id != slug)
+                return toast.error('You are not authorized to update error sheet for this user')
+
             if (probName === '' || probLink === '' || mistake === '' || improvement === '' || tags === '')
                 return toast.error('Please fill all the fields')
 
@@ -160,6 +166,9 @@ const ErrorSheetView = () => {
 
     const DeleteErrorSheet = async (errorid) => {
         try {
+            if (id != slug)
+                return toast.error('You are not authorized to delete error sheet for this user')
+
             dispatch(deleteErrorDocument({ errorid, page: CP, userid: id }))
             toast.success('Error Sheet Deleted Successfully')
             setSheetModal(false)
@@ -170,7 +179,7 @@ const ErrorSheetView = () => {
 
     useEffect(() => {
         if (user.isPresent && id)
-            dispatch(getErrorSheets({ id, page: CP }))
+            dispatch(getErrorSheets({ id: slug, page: CP }))
     }, [user.isPresent, id])
 
     useEffect(() => {
@@ -481,6 +490,7 @@ const ErrorSheetView = () => {
                                         type='button'
                                         className='text-red-400 hover:text-red-600 mr-4'
                                         onClick={() => DeleteErrorSheet(sheet._id)}
+                                        disabled={sheet?.UserRef?._id == id ? false : true}
                                     >
                                         <AiOutlineDelete className='text-2xl' />
                                     </button>
