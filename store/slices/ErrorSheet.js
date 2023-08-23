@@ -12,22 +12,22 @@ const initialState = {
 }
 
 export const getErrorSheets = createAsyncThunk('errorsheet/all', async ({ id, page }) => {
-    const { data } = await axios.get(`http://localhost:5000/v1/errorsheet/all/${id}?page=${page}`)
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/all/${id}?page=${page}`)
     return data;
 });
 
 export const addNewErrorDocument = createAsyncThunk('errorsheet/add', async (formdata) => {
-    const { data } = await axios.post(`http://localhost:5000/v1/errorsheet/create`, formdata)
+    const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/create`, formdata)
     return data;
 });
 
 export const deleteErrorDocument = createAsyncThunk('errorsheet/delete', async ({ errorid, page, userid }) => {
-    const { data } = await axios.delete(`http://localhost:5000/v1/errorsheet/${errorid}?page=${page}&userid=${userid}`)
+    const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/${errorid}?page=${page}&userid=${userid}`)
     return data;
 });
 
 export const updateErrorDocument = createAsyncThunk('errorsheet/update', async (formdata) => {
-    const { data } = await axios.patch(`http://localhost:5000/v1/errorsheet/${formdata.sheetid}`, formdata)
+    const { data } = await axios.patch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/${formdata.sheetid}`, formdata)
     return data;
 });
 
