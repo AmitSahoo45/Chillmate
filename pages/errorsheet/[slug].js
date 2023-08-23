@@ -498,6 +498,7 @@ const ErrorSheetView = () => {
                                         type='button'
                                         className='text-blue-400 hover:text-blue-600 mr-2'
                                         onClick={() => ToggleIsEdit()}
+                                        disabled={sheet?.UserRef?._id == id ? false : true}
                                     >
                                         <BiPencil className='text-2xl' />
                                     </button>
