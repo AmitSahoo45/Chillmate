@@ -1,5 +1,5 @@
 Live Demo Link - [Here](https://chillmate.vercel.app/)
-***Link to Backend Repo**** - [Here](https://github.com/AmitSahoo45/chillmate-backend/)
+***Link to Backend Repo*** - [Here](https://github.com/AmitSahoo45/chillmate-backend/)
 
 ### This website is currently under development. More features will be added soon. Feel free to contribute to this project.
 
