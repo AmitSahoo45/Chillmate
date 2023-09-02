@@ -230,7 +230,7 @@ const ErrorSheetView = () => {
                 </button>
             </header>
 
-            <div className='flex justify-center items-center my-5'>
+            {/* <div className='flex justify-center items-center my-5'>
                 <div className='flex justify-center items-center flex-1'>
                     <input
                         type='text'
@@ -269,7 +269,7 @@ const ErrorSheetView = () => {
                         <option value='Maybe'>Maybe</option>
                     </select>
                 </div>
-            </div>
+            </div> */}
 
             <section className='mt-5 min-h-[70vh]'>
                 <motion.div
