@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import Modal from 'react-modal'
 import { useDispatch, useSelector } from 'react-redux';
 import { BiCodeAlt, BiPencil } from 'react-icons/bi'
-import { AiOutlineDelete, AiOutlineCloseCircle } from 'react-icons/ai'
+import { AiOutlineDelete, AiOutlineCloseCircle, AiOutlineSearch } from 'react-icons/ai'
 import moment from 'moment';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -46,6 +46,9 @@ const ErrorSheetView = () => {
     const [sheet, setSheet] = useState({});
 
     const [isEditing, setIsEditing] = useState(false);
+
+    const [searchText, setSearchText] = useState('');
+    const [searchBy, setSearchBy] = useState('');
 
     const dispatch = useDispatch()
     const router = useRouter()
@@ -177,9 +180,21 @@ const ErrorSheetView = () => {
         }
     }
 
+    const searchForPNameTags = () => {
+        try {
+            if (searchText === '')
+                return toast.error('Please enter a search text')
+
+            dispatch(getErrorSheets({ id: slug, page: CP, searchBy, searchText }))
+
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
     useEffect(() => {
         if (user.isPresent && id)
-            dispatch(getErrorSheets({ id: slug, page: CP }))
+            dispatch(getErrorSheets({ id: slug, page: CP, searchBy, searchText }))
     }, [user.isPresent, id])
 
     useEffect(() => {
@@ -215,11 +230,52 @@ const ErrorSheetView = () => {
                 </button>
             </header>
 
-            <section className='mt-5'>
+            <div className='flex justify-center items-center my-5'>
+                <div className='flex justify-center items-center flex-1'>
+                    <input
+                        type='text'
+                        name='search'
+                        id='search'
+                        className='border border-gray-300 rounded-md px-3 py-2 mt-5 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-full'
+                        placeholder='Search by Problem Name or Tags'
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
+                    <div
+                        className='flex justify-center items-center'
+                        onClick={searchForPNameTags}
+                    >
+                        <AiOutlineSearch
+                            className='text-2xl text-theme-ferrari-red cursor-pointer hover:text-theme-orange transition duration-300 ease-in-out mt-5 ml-3'
+                        />
+                    </div>
+                </div>
+                <div className='flex justify-center items-center flex-1'>
+                    Search By &nbsp;<span
+                        className='font-bold text-theme-ferrari-red'
+                    >Revise before Interview</span>
+
+                    <select
+                        name='BeforeInterviewLookup'
+                        id='BeforeInterviewLookup'
+                        className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent ml-3'
+                        value={searchBy}
+                        defaultValue={searchBy}
+                        onChange={(e) => setSearchBy(e.target.value)}
+                    >
+                        <option value=''>All</option>
+                        <option value='Yes'>Yes</option>
+                        <option value='No'>No</option>
+                        <option value='Maybe'>Maybe</option>
+                    </select>
+                </div>
+            </div>
+
+            <section className='mt-5 min-h-[70vh]'>
                 <motion.div
                     transition={{ duration: 0.75, type: 'tween', stiffness: 100 }}
                     whileInView={{ y: [-100, 0], opacity: [0, 1], duration: 0.1 }}
-                    className='grid grid-cols-1 sm:grid-cols-3 gap-5 min-h-[70vh]'
+                    className='grid grid-cols-1 sm:grid-cols-3 gap-5'
                 >
                     {errorsheets?.map((sheet, index) => (
                         <div
@@ -281,9 +337,8 @@ const ErrorSheetView = () => {
                         </div>
                     ))}
                 </motion.div>
-
                 {errorsheets?.length === 0 &&
-                    <div className='flex flex-col items-center justify-center mt-10'>
+                    <div className='flex flex-col items-center justify-center mt-10 min-h-[70vh]'>
                         <p className='text-lg font-medium text-theme-ferrari-red'>No Error Sheets Found</p>
                     </div>
                 }
@@ -294,9 +349,9 @@ const ErrorSheetView = () => {
                 <div className=''>
                     <div className='flex items-center justify-between mt-5'>
                         <button
-                            className={`${CP === 1 ? 'bg-gray-400' : 'bg-theme-ferrari-red'}
+                            className={`${CP === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-theme-ferrari-red'}
                              text-white px-3 py-2 rounded-md mr-2`}
-                            onClick={() => dispatch(getErrorSheets({ id, page: CP - 1 }))}
+                            onClick={() => dispatch(getErrorSheets({ id, page: CP - 1, searchBy, searchText }))}
                             disabled={CP === 1}
                         >
                             Previous
@@ -305,10 +360,10 @@ const ErrorSheetView = () => {
                             {CP} of {NOP}
                         </div>
                         <button
-                            className={`${CP === NOP ? 'bg-gray-400' : 'bg-theme-ferrari-red'} 
+                            className={`${CP === NOP | NOP === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-theme-ferrari-red'} 
                             text-white px-3 py-2 rounded-md`}
-                            onClick={() => dispatch(getErrorSheets({ id, page: CP + 1 }))}
-                            disabled={CP === NOP}
+                            onClick={() => dispatch(getErrorSheets({ id, page: CP + 1, searchBy, searchText }))}
+                            disabled={CP === NOP || NOP === 0}
                         >
                             Next
                         </button>
@@ -355,6 +410,7 @@ const ErrorSheetView = () => {
                                     value={probName}
                                     onChange={(e) => setProbName(e.target.value)}
                                     required
+                                    autoComplete='off'
                                 />
                             </div>
                             <div className='flex flex-col'>
@@ -490,7 +546,7 @@ const ErrorSheetView = () => {
                                         type='button'
                                         className='text-red-400 hover:text-red-600 mr-4'
                                         onClick={() => DeleteErrorSheet(sheet._id)}
-                                        disabled={sheet?.UserRef?._id == id ? false : true}
+                                        disabled={sheet?.UserRef?._id || sheet?.UserRef == id ? false : true}
                                     >
                                         <AiOutlineDelete className='text-2xl' />
                                     </button>
@@ -498,7 +554,7 @@ const ErrorSheetView = () => {
                                         type='button'
                                         className='text-blue-400 hover:text-blue-600 mr-2'
                                         onClick={() => ToggleIsEdit()}
-                                        disabled={sheet?.UserRef?._id == id ? false : true}
+                                        disabled={sheet?.UserRef?._id || sheet?.UserRef == id ? false : true}
                                     >
                                         <BiPencil className='text-2xl' />
                                     </button>

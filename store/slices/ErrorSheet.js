@@ -11,8 +11,8 @@ const initialState = {
     error: null
 }
 
-export const getErrorSheets = createAsyncThunk('errorsheet/all', async ({ id, page }) => {
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/all/${id}?page=${page}`)
+export const getErrorSheets = createAsyncThunk('errorsheet/all', async ({ id, page, searchBy, searchText }) => {
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/all/${id}?page=${page}&searchBy=${searchBy}&searchText=${searchText}`)
     console.log(data)
     return data;
 });
