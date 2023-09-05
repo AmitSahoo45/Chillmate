@@ -18,6 +18,11 @@ const CreateSubject = () => {
     const subjectCreate = async (e) => {
         e.preventDefault()
         try {
+            if(!user) {
+                toast.error('You must be logged in to create a subject')
+                return
+            }
+
             const { data } = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/create`, {
                 ...subjectDetails,
                 userGleID: user.uid,
@@ -51,6 +56,7 @@ const CreateSubject = () => {
                         placeholder='Subject Name'
                         value={subjectDetails.Subname}
                         onChange={(e) => setSubjectDetails({ ...subjectDetails, Subname: e.target.value })}
+                        required
                     />
                 </div>
                 <div className="flex flex-col mt-5">
@@ -63,6 +69,7 @@ const CreateSubject = () => {
                         placeholder='Subject Description'
                         value={subjectDetails.Subdesc}
                         onChange={(e) => setSubjectDetails({ ...subjectDetails, Subdesc: e.target.value })}
+                        required
                     ></textarea>
                 </div>
                 <div className="flex flex-col mt-5">
@@ -74,6 +81,7 @@ const CreateSubject = () => {
                         placeholder='Subject Tags (Comma separated)'
                         value={subjectDetails.Subtags}
                         onChange={(e) => setSubjectDetails({ ...subjectDetails, Subtags: e.target.value })}
+                        required
                     />
                 </div>
                 <div className="flex flex-col mt-5">
