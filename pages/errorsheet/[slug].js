@@ -181,9 +181,6 @@ const ErrorSheetView = () => {
 
     const searchForPNameTags = () => {
         try {
-            if (searchText === '' && searchBy === '')
-                return toast.error('Please enter something to search')
-
             dispatch(getErrorSheets({ id: slug, page: CP, searchBy, searchText }))
         } catch (error) {
             toast.error(error.message)
