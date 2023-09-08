@@ -94,7 +94,6 @@ const ErrorSheetView = () => {
         openModal();
         setSheetModal(false);
     }
-    console.log(sheet?.UserRef?._id, id)
     const handleSheetModal = () => setSheetModal(!sheetModal)
 
     const isValidURL = (string) => {
@@ -182,17 +181,17 @@ const ErrorSheetView = () => {
 
     const searchForPNameTags = () => {
         try {
-            if (searchText === '')
-                return toast.error('Please enter a search text')
+            if (searchText === '' && searchBy === '')
+                return toast.error('Please enter something to search')
 
             dispatch(getErrorSheets({ id: slug, page: CP, searchBy, searchText }))
-
         } catch (error) {
             toast.error(error.message)
         }
     }
 
     useEffect(() => {
+        console.log("id ->>> ", id)
         if (user.isPresent && id)
             dispatch(getErrorSheets({ id: slug, page: CP, searchBy, searchText }))
     }, [user.isPresent, id])
@@ -230,46 +229,43 @@ const ErrorSheetView = () => {
                 </button>
             </header>
 
-            {/* <div className='flex justify-center items-center my-5'>
+            <div className='flex justify-center items-center my-5'>
                 <div className='flex justify-center items-center flex-1'>
                     <input
                         type='text'
                         name='search'
                         id='search'
-                        className='border border-gray-300 rounded-md px-3 py-2 mt-5 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-full'
+                        className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-3/5'
                         placeholder='Search by Problem Name or Tags'
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                     />
-                    <div
-                        className='flex justify-center items-center'
-                        onClick={searchForPNameTags}
-                    >
-                        <AiOutlineSearch
-                            className='text-2xl text-theme-ferrari-red cursor-pointer hover:text-theme-orange transition duration-300 ease-in-out mt-5 ml-3'
-                        />
+                    <div className='flex justify-center items-center flex-1'>
+                        Search By &nbsp;<span
+                            className='font-bold text-theme-ferrari-red'
+                        >Revise before Interview</span>
+                        <select
+                            name='BeforeInterviewLookup'
+                            id='BeforeInterviewLookup'
+                            className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent ml-3'
+                            value={searchBy}
+                            defaultValue={searchBy}
+                            onChange={(e) => setSearchBy(e.target.value)}
+                        >
+                            <option value=''>All</option>
+                            <option value='Yes'>Yes</option>
+                            <option value='No'>No</option>
+                            <option value='Maybe'>Maybe</option>
+                        </select>
                     </div>
                 </div>
-                <div className='flex justify-center items-center flex-1'>
-                    Search By &nbsp;<span
-                        className='font-bold text-theme-ferrari-red'
-                    >Revise before Interview</span>
-
-                    <select
-                        name='BeforeInterviewLookup'
-                        id='BeforeInterviewLookup'
-                        className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent ml-3'
-                        value={searchBy}
-                        defaultValue={searchBy}
-                        onChange={(e) => setSearchBy(e.target.value)}
-                    >
-                        <option value=''>All</option>
-                        <option value='Yes'>Yes</option>
-                        <option value='No'>No</option>
-                        <option value='Maybe'>Maybe</option>
-                    </select>
-                </div>
-            </div> */}
+                <button
+                    className='bg-theme-ferrari-red text-white px-2 py-2 text-2xl rounded-md ml-3'
+                    onClick={searchForPNameTags}
+                >
+                    <AiOutlineSearch />
+                </button>
+            </div>
 
             <section className='mt-5 min-h-[70vh]'>
                 <motion.div
