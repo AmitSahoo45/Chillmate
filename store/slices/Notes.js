@@ -42,6 +42,6 @@ const notesSlice = createSlice({
 });
 
 export const selectNotes = state => state.notes.Notes
-
+export const selectLoadingState = state => state.notes.loading
 
 export default notesSlice.reducer;

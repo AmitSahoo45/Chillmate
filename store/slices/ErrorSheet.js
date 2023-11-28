@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 const initialState = {
     ErrorSheet: [],
     AccessControll: [],
+    user: {},
     currentPage: 1,
     numberOfPages: 0,
     loading: false,
@@ -13,7 +14,6 @@ const initialState = {
 
 export const getErrorSheets = createAsyncThunk('errorsheet/all', async ({ id, page, searchBy, searchText }) => {
     const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/errorsheet/all/${id}?page=${page}&searchBy=${searchBy}&searchText=${searchText}`)
-    console.log(data)
     return data;
 });
 
@@ -47,6 +47,7 @@ const errorSheetSlice = createSlice({
                 state.ErrorSheet = action.payload.errorsheets;
                 state.currentPage = action.payload.currentPage;
                 state.numberOfPages = action.payload.numberOfPages
+                state.user = action.payload.user;
             })
             .addCase(getErrorSheets.rejected, (state, action) => {
                 state.loading = false;
@@ -108,6 +109,8 @@ const errorSheetSlice = createSlice({
 export const selectErrorSheet = state => { return state.errorsheet.ErrorSheet }
 export const selectCurrentPage = state => { return state.errorsheet.currentPage }
 export const selectNumberOfPages = state => { return state.errorsheet.numberOfPages }
+export const selectUser = state => { return state.errorsheet.user }
+export const selectLoadingState = state => { return state.errorsheet.loading }
 export const selectError = state => { return state.errorsheet.error }
 
 export default errorSheetSlice.reducer;

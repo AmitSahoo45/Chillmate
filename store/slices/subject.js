@@ -36,6 +36,7 @@ const subjectSlice = createSlice({
     }
 });
 
-export const selectSubjects = (state) => state.subject?.subjects;
+export const selectSubjects = (state) => state.subject.subjects;
+export const selectLoadingState = (state) => state.subject.loading;
 
 export default subjectSlice.reducer;

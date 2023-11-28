@@ -8,7 +8,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
 
-import { getNotes, selectNotes, deleteNotes } from '../../../store/slices/Notes'
+import { getNotes, selectNotes, deleteNotes, selectLoadingState } from '../../../store/slices/Notes'
 import { Loader } from '../../../components'
 import { ContextStore } from '../../../constants/context/Context';
 import moment from 'moment/moment';
@@ -27,15 +27,15 @@ const customStyles = {
 Modal.setAppElement('#__next')
 
 const Notes = () => {
-  const [notes, setNotes] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
   const [modalIsOpen, setIsOpen] = useState(false)
   const [deleteID, setDeleteID] = useState(null)
   const [isNoteDeleted, setIsNoteDeleted] = useState(false)
 
   const dispatch = useDispatch();
   const router = useRouter()
-  const TextNotes = useSelector(selectNotes)
+
+  const { notes } = useSelector(selectNotes)
+  const loadingState = useSelector(selectLoadingState)
 
   const { slug } = router.query
   const { user } = useContext(ContextStore)
@@ -67,22 +67,22 @@ const Notes = () => {
       dispatch(getNotes(slug))
   }, [user.isPresent, slug, isNoteDeleted])
 
-  useEffect(() => {
-    if (TextNotes)
-      setNotes(TextNotes.notes)
-  }, [TextNotes])
+  if (!user.isPresent)
+    return <div className='flex items-center flex-col justify-center min-h-screen'>
+      <p className='mb-4'>Please Sign In to continue</p>
+    </div>
 
   return (
     <>
       <Head>
-        <title>Subject Notes</title>
+        <title>Notes | {user.name || 'Loading username'}</title>
       </Head>
-      <div className='my-5'>
+      <div className='my-5 min-h-screen'>
         <div className="flex flex-col">
           <div className="flex flex-col items-center sm:flex-row">
             <div className="sm:w-48 sm:h-48 h-32 w-32 sm:pb-0 pb-8 inline-flex items-center justify-center rounded-full flex-shrink-0 relative flex-[0.4]">
               <Image src='/assets/images/takingNotes.svg'
-                alt="Nature Sounds"
+                alt="Taking Notes"
                 height={200}
                 width={200}
               />
@@ -115,50 +115,52 @@ const Notes = () => {
               </div>
               <div className="border-b-2 border-theme-ferrari-red mb-2"></div>
               <div className='flex flex-col'>
-                {isLoading ?
-                  <div className="mt-5">
-                    <Loader />
-                    <p className='text-center text-lg'>Please wait while we load your Notes</p>
+                {loadingState && <Loader />}
+
+                {!loadingState && notes?.length == 0 &&
+                  <div className='flex flex-col items-center justify-center'>
+                    <p className='text-center text-lg'>No notes found</p>
+                    <button
+                      onClick={() => router.push(`/subject/notes/new/${slug}`)}
+                      className="bg-[var(--orange)] text-white px-4 py-2 my-5 rounded-md">
+                      Create New Note
+                    </button>
                   </div>
-                  :
-                  notes?.length == 0 ?
-                    <div className="mt-3">
-                      <p className='text-center text-theme-ferrari-red text-lg'>
-                        You have no notes yet
-                      </p>
-                    </div> :
-                    notes?.map(note => (
-                      <div key={note._id} className='flex rounded-md items-center justify-between p-4 my-1 sm:my-2 w-full shadow-md shadow-slate-200 transition-all hover:shadow-theme-orange hover:shadow-sm flex-col sm:flex-row'>
-                        <div>
-                          <h3 className='font-montserrat text-lg'>{note.header}</h3>
-                          <p className='font-montserrat text-sm'>
-                            {note.desc.substring(0, 70)}
-                            {note.desc.length > 70 && '...'}
-                            </p>
-                          <p className="text-xs mt-2">{moment(note.createdAt).format("dddd MMM Do YY")}</p>
-                        </div>
-                        <div className='flex my-3 sm:my-0'>
-                          {note.userGleID == user.uid &&
-                            <RiPencilFill
-                              className='ml-2 text-lg cursor-pointer'
-                              onClick={() => router.push(`/subject/notes/edit/${note._id}`)}
-                            />}
-                          {note.userGleID == user.uid &&
-                            <RiDeleteBin3Line
-                              className='ml-3 text-lg cursor-pointer'
-                              onClick={() => toggleModal(note._id)}
-                            />}
-                          <RiShareLine
-                            className='ml-3 text-lg cursor-pointer'
-                            onClick={() => CopyURL(note._id)}
-                          />
-                          <RiEyeFill
-                            className='ml-3 text-lg cursor-pointer mr-2'
-                            onClick={() => router.push(`/subject/notes/view/${note._id}`)}
-                          />
-                        </div>
+                }
+                {notes?.length > 0
+                  &&
+                  notes.map(note => (
+                    <div key={note._id} className='flex rounded-md items-center justify-between p-4 my-1 sm:my-2 w-full shadow-md shadow-slate-200 transition-all hover:shadow-theme-orange hover:shadow-sm flex-col sm:flex-row'>
+                      <div>
+                        <h3 className='font-montserrat text-lg'>{note.header}</h3>
+                        <p className='font-montserrat text-sm'>
+                          {note.desc.substring(0, 70)}
+                          {note.desc.length > 70 && '...'}
+                        </p>
+                        <p className="text-xs mt-2">{moment(note.createdAt).format("dddd MMM Do YY")}</p>
                       </div>
-                    ))}
+                      <div className='flex my-3 sm:my-0'>
+                        {note.userGleID == user.uid &&
+                          <RiPencilFill
+                            className='ml-2 text-lg cursor-pointer'
+                            onClick={() => router.push(`/subject/notes/edit/${note._id}`)}
+                          />}
+                        {note.userGleID == user.uid &&
+                          <RiDeleteBin3Line
+                            className='ml-3 text-lg cursor-pointer'
+                            onClick={() => toggleModal(note._id)}
+                          />}
+                        <RiShareLine
+                          className='ml-3 text-lg cursor-pointer'
+                          onClick={() => CopyURL(note._id)}
+                        />
+                        <RiEyeFill
+                          className='ml-3 text-lg cursor-pointer mr-2'
+                          onClick={() => router.push(`/subject/notes/view/${note._id}`)}
+                        />
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>

@@ -12,8 +12,10 @@ import { toast } from 'react-toastify';
 import { ContextStore } from '../../constants/context/Context'
 import {
     getErrorSheets, addNewErrorDocument, deleteErrorDocument, updateErrorDocument,
-    selectErrorSheet, selectCurrentPage, selectNumberOfPages, selectError
+    selectErrorSheet, selectCurrentPage, selectNumberOfPages, selectLoadingState, selectUser
 } from '../../store/slices/ErrorSheet'
+import Loader from '../../components/Loader/Loader';
+import { Avatar } from '../../components';
 
 const customStyles = {
     content: {
@@ -30,6 +32,7 @@ const customStyles = {
     },
 };
 
+
 const ErrorSheetView = () => {
     const [probName, setProbName] = useState('');
     const [probLink, setProbLink] = useState('');
@@ -41,7 +44,6 @@ const ErrorSheetView = () => {
     const [revisionPriority, setRevisionPriority] = useState('High');
 
     const [modalIsOpen, setIsOpen] = useState(false);
-    const [errorsheets, setErrorsheets] = useState([]);
     const [sheetModal, setSheetModal] = useState(false);
     const [sheet, setSheet] = useState({});
 
@@ -57,11 +59,10 @@ const ErrorSheetView = () => {
     const { slug } = router.query
 
     const eSheets = useSelector(selectErrorSheet)
+    const userstate = useSelector(selectUser)
     const CP = useSelector(selectCurrentPage)
     const NOP = useSelector(selectNumberOfPages)
-    const Sheeterror = useSelector(selectError)
-
-    const openModal = () => setIsOpen(true);
+    const loadingstate = useSelector(selectLoadingState)
 
     const MoveToDefault = () => {
         setProbName('');
@@ -74,6 +75,7 @@ const ErrorSheetView = () => {
         setRevisionPriority('High');
     }
 
+    const openModal = () => setIsOpen(true);
     const closeModal = () => {
         setIsOpen(false);
         setIsEditing(false);
@@ -188,15 +190,9 @@ const ErrorSheetView = () => {
     }
 
     useEffect(() => {
-        console.log("id ->>> ", id)
         if (user.isPresent && id)
             dispatch(getErrorSheets({ id: slug, page: CP, searchBy, searchText }))
     }, [user.isPresent, id])
-
-    useEffect(() => {
-        if (eSheets)
-            setErrorsheets(eSheets)
-    }, [eSheets, CP, NOP])
 
     if (!user.isPresent) return (
         <div className='min-h-[80vh] mx-auto px-8 py-5'>
@@ -209,16 +205,19 @@ const ErrorSheetView = () => {
     return (
         <main className='min-h-[80vh] mx-auto px-8 py-5'>
             <Head>
-                <title>{id === slug ? 'My' : 'Others'} Error Sheet</title>
-                <meta name="description" content={id === slug
-                    ?
-                    `${user.name}'s Error Sheet}` :
-                    ""} />
+                <title>{user.name || "User's"} Error Sheet</title>
             </Head>
             <header className='flex justify-between items-center'>
-                <h1 className='text-2xl text-theme-ferrari-red'>
-                    {id === slug ? 'My' : 'Others'} Error Sheet
-                </h1>
+                    {userstate && (
+                        <div className="flex justify-center sm:flex-row flex-col items-center">
+                            <h2 className='mr-2'>Error Sheet maintained by: </h2>
+                            <div className="flex items-center justify-between">
+                                <p className='mr-2 font-semibold'>{userstate.name}</p>
+                                <Avatar alt={userstate.name} src={userstate.photoURL} />
+                            </div>
+                        </div>
+                    )}
+
                 <button
                     className='bg-theme-orange text-white px-3 py-2 rounded-md'
                     onClick={openModal}>
@@ -226,42 +225,40 @@ const ErrorSheetView = () => {
                 </button>
             </header>
 
-            <div className='flex justify-center items-center my-5'>
+            <div className='flex justify-center items-center flex-1 my-5 flex-col'>
+                <input
+                    type='text'
+                    name='search'
+                    id='search'
+                    className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-full mb-3'
+                    placeholder='Search by Problem Name or Tags'
+                    autoComplete='off'
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                />
                 <div className='flex justify-center items-center flex-1'>
-                    <input
-                        type='text'
-                        name='search'
-                        id='search'
-                        className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-3/5'
-                        placeholder='Search by Problem Name or Tags'
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                    />
-                    <div className='flex justify-center items-center flex-1'>
-                        Search By &nbsp;<span
-                            className='font-bold text-theme-ferrari-red'
-                        >Revise before Interview</span>
-                        <select
-                            name='BeforeInterviewLookup'
-                            id='BeforeInterviewLookup'
-                            className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent ml-3'
-                            value={searchBy}
-                            defaultValue={searchBy}
-                            onChange={(e) => setSearchBy(e.target.value)}
-                        >
-                            <option value=''>All</option>
-                            <option value='Yes'>Yes</option>
-                            <option value='No'>No</option>
-                            <option value='Maybe'>Maybe</option>
-                        </select>
-                    </div>
+                    <p className="text-[12px] sm:text-base mr-1">Search By </p>
+                    <span className='font-bold text-theme-ferrari-red text-[12px] sm:text-base'>Revise before Interview</span>
+                    <select
+                        name='BeforeInterviewLookup'
+                        id='BeforeInterviewLookup'
+                        className='border border-gray-300 rounded-md px-3 sm:px-2 py-1 sm:py-2 w-20 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent ml-1 sm:ml-3'
+                        value={searchBy}
+                        defaultValue={searchBy}
+                        onChange={(e) => setSearchBy(e.target.value)}
+                    >
+                        <option value=''>All</option>
+                        <option value='Yes'>Yes</option>
+                        <option value='No'>No</option>
+                        <option value='Maybe'>Maybe</option>
+                    </select>
+                    <button
+                        className='bg-theme-ferrari-red text-white px-2 py-2 text-2xl rounded-md ml-3'
+                        onClick={searchForPNameTags}
+                    >
+                        <AiOutlineSearch />
+                    </button>
                 </div>
-                <button
-                    className='bg-theme-ferrari-red text-white px-2 py-2 text-2xl rounded-md ml-3'
-                    onClick={searchForPNameTags}
-                >
-                    <AiOutlineSearch />
-                </button>
             </div>
 
             <section className='mt-5 min-h-[70vh]'>
@@ -270,71 +267,79 @@ const ErrorSheetView = () => {
                     whileInView={{ y: [-100, 0], opacity: [0, 1], duration: 0.1 }}
                     className='grid grid-cols-1 sm:grid-cols-3 gap-5'
                 >
-                    {errorsheets?.map((sheet, index) => (
-                        <div
-                            key={index}
-                            className='flex flex-col border border-gray-200 shadow-md rounded-md p-5'>
-                            <div className="flex justify-between align-center">
-                                <h3
-                                    className="cursor-pointer text-base font-medium font-montserrat"
-                                    onClick={() => { setSheet(sheet); handleSheetModal() }}
-                                >
-                                    {sheet?.probName.substring(0, 30)}
-                                    {sheet?.probName.length > 30 && '...'}
-                                </h3>
-                                <a href={sheet?.probLink} rel="noopener noreferrer" target="_blank">
-                                    <BiCodeAlt
-                                        className='text-2xl text-theme-ferrari-red cursor-pointer hover:text-theme-orange transition duration-300 ease-in-out'
-                                    />
-                                </a>
-                            </div>
+                    {eSheets.length > 0
+                        && eSheets.map((sheet, index) => (
+                            <div
+                                key={index}
+                                className='flex flex-col border border-gray-200 shadow-md rounded-md p-5'>
+                                <div className="flex justify-between align-center">
+                                    <h3
+                                        className="cursor-pointer text-base font-medium font-montserrat"
+                                        onClick={() => { setSheet(sheet); handleSheetModal() }}
+                                    >
+                                        {sheet?.probName.substring(0, 30)}
+                                        {sheet?.probName.length > 30 && '...'}
+                                    </h3>
+                                    <a href={sheet?.probLink} rel="noopener noreferrer" target="_blank">
+                                        <BiCodeAlt
+                                            className='text-2xl text-theme-ferrari-red cursor-pointer hover:text-theme-orange transition duration-300 ease-in-out'
+                                        />
+                                    </a>
+                                </div>
 
-                            <div className='flex flex-col mt-1'>
-                                <p className='text-sm'>
-                                    <span className='font-bold'>Revision</span> Priority: &nbsp;
-                                    {sheet.revisionPriority === 'High' && <span className='font-bold text-red-500'>High</span>}
-                                    {sheet.revisionPriority === 'Medium' && <span className='font-bold text-yellow-500'>Medium</span>}
-                                    {sheet.revisionPriority === 'Low' && <span className='font-bold text-green-500'>Low</span>}
+                                <div className='flex flex-col mt-1'>
+                                    <p className='text-sm'>
+                                        <span className='font-bold'>Revision</span> Priority: &nbsp;
+                                        {sheet.revisionPriority === 'High' && <span className='font-bold text-red-500'>High</span>}
+                                        {sheet.revisionPriority === 'Medium' && <span className='font-bold text-yellow-500'>Medium</span>}
+                                        {sheet.revisionPriority === 'Low' && <span className='font-bold text-green-500'>Low</span>}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className='text-sm mt-1'>
+                                        <span className='font-bold'>Mistake</span> Corrected:
+                                        <span className={`${sheet?.isMistakeCorrected ? 'text-green-500' : 'text-red-500'} font-bold ml-1`}>
+                                            {sheet?.isMistakeCorrected ? 'Yes' : 'No'}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className='text-sm mt-1'>
+                                        <span className='font-bold'>Revise before Interview</span>:
+                                        <span
+                                            className={
+                                                `${sheet?.BeforeInterviewLookup === 'Yes' ? 'text-green-500' :
+                                                    sheet?.BeforeInterviewLookup === 'No' ? 'text-red-500' : 'text-yellow-500'
+                                                } font-bold ml-1`
+                                            }>
+                                            {sheet?.BeforeInterviewLookup}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                <p className='text-[13px] font-light mt-2'>
+                                    Created On: {moment(sheet.createdAt).format('DD MMM YYYY')}
+                                </p>
+                                <p className='text-[13px] font-light mt-1'>
+                                    Last Updated: {moment(sheet.updatedAt).format('DD MMM YYYY')}
                                 </p>
                             </div>
-
-                            <div>
-                                <p className='text-sm mt-1'>
-                                    <span className='font-bold'>Mistake</span> Corrected:
-                                    <span className={`${sheet?.isMistakeCorrected ? 'text-green-500' : 'text-red-500'} font-bold ml-1`}>
-                                        {sheet?.isMistakeCorrected ? 'Yes' : 'No'}
-                                    </span>
-                                </p>
-                            </div>
-
-                            <div>
-                                <p className='text-sm mt-1'>
-                                    <span className='font-bold'>Revise before Interview</span>:
-                                    <span
-                                        className={
-                                            `${sheet?.BeforeInterviewLookup === 'Yes' ? 'text-green-500' :
-                                                sheet?.BeforeInterviewLookup === 'No' ? 'text-red-500' : 'text-yellow-500'
-                                            } font-bold ml-1`
-                                        }>
-                                        {sheet?.BeforeInterviewLookup}
-                                    </span>
-                                </p>
-                            </div>
-
-                            <p className='text-[13px] font-light mt-2'>
-                                Created On: {moment(sheet.createdAt).format('DD MMM YYYY')}
-                            </p>
-                            <p className='text-[13px] font-light mt-1'>
-                                Last Updated: {moment(sheet.updatedAt).format('DD MMM YYYY')}
-                            </p>
-                        </div>
-                    ))}
+                        ))}
                 </motion.div>
-                {errorsheets?.length === 0 &&
+                {(eSheets.length === 0 && !loadingstate) &&
                     <div className='flex flex-col items-center justify-center mt-10 min-h-[70vh]'>
                         <p className='text-lg font-medium text-theme-ferrari-red'>No Error Sheets Found</p>
                     </div>
                 }
+
+                {loadingstate && <div className='flex justify-center items-center mt-10'>
+                    <div className="mt-5">
+                        <Loader />
+                        <p className='text-center text-lg'>Please wait while we load your Notes</p>
+                    </div>
+                </div>}
 
 
                 {/* Pagination */}
@@ -534,24 +539,20 @@ const ErrorSheetView = () => {
                             <h2 className='text-lg font-medium text-theme-ferrari-red'>{sheet.probName}</h2>
                             <div className='flex flex-col'>
 
-                                <div>
-                                    <button
-                                        type='button'
-                                        className='text-red-400 hover:text-red-600 mr-4'
-                                        onClick={() => DeleteErrorSheet(sheet._id)}
-                                        disabled={sheet?.UserRef?._id || sheet?.UserRef == id ? false : true}
-                                    >
-                                        <AiOutlineDelete className='text-2xl' />
-                                    </button>
-                                    <button
-                                        type='button'
-                                        className='text-blue-400 hover:text-blue-600 mr-2'
-                                        onClick={() => ToggleIsEdit()}
-                                        disabled={sheet?.UserRef?._id || sheet?.UserRef == id ? false : true}
-                                    >
-                                        <BiPencil className='text-2xl' />
-                                    </button>
-                                </div>
+                                {sheet?.UserRef?._id || sheet?.UserRef == id &&
+                                    <div>
+                                        <button type='button' className='text-red-400 hover:text-red-600 mr-4'
+                                            onClick={() => DeleteErrorSheet(sheet._id)}
+                                        >
+                                            <AiOutlineDelete className='text-2xl' />
+                                        </button>
+                                        <button type='button' className='text-blue-400 hover:text-blue-600 mr-2'
+                                            onClick={() => ToggleIsEdit()}
+                                        >
+                                            <BiPencil className='text-2xl' />
+                                        </button>
+                                    </div>
+                                }
 
                                 <div className='mt-2'>
                                     <button className='text-2xl mr-3 text-green-400 hover:text-green-600'>
@@ -631,7 +632,7 @@ const ErrorSheetView = () => {
                 }
             </Modal>
 
-        </main>
+        </main >
     )
 }
 

@@ -8,7 +8,7 @@ import moment from 'moment/moment';
 import Modal from 'react-modal';
 
 import { Loader } from '../../components';
-import { getSubjects, selectSubjects, deleteSubject } from '../../store/slices/subject'
+import { getSubjects, selectSubjects, deleteSubject, selectLoadingState } from '../../store/slices/subject'
 import { ContextStore } from '../../constants/context/Context';
 import { toast } from 'react-toastify';
 
@@ -26,7 +26,6 @@ const customStyles = {
 };
 
 const Subject = () => {
-    const [chapters, setChapters] = useState([])
     const [modalIsOpen, setIsOpen] = useState(false)
     const [deleteID, setDeleteID] = useState(null)
     const [isNoteDeleted, setIsNoteDeleted] = useState(false)
@@ -35,7 +34,8 @@ const Subject = () => {
     const router = useRouter()
 
     const { user } = useContext(ContextStore)
-    const subjects = useSelector(selectSubjects)
+    const { subjects } = useSelector(selectSubjects)
+    const loadingState = useSelector(selectLoadingState)
 
     const toggleModal = (id) => {
         setIsOpen(!modalIsOpen)
@@ -60,21 +60,22 @@ const Subject = () => {
     }
 
     useEffect(() => {
-        if (user.isPresent || chapters?.length == 0)
+        if (user.isPresent)
             dispatch(getSubjects(user.uid));
     }, [user.isPresent, isNoteDeleted]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => {
-        setChapters(subjects.subjects);
-    }, [subjects]);
+    if (!user.isPresent)
+        return <div className='flex items-center flex-col justify-center min-h-screen'>
+            <p className='mb-4'>Please Sign In to continue</p>
+        </div>
+
 
     return (
         <>
             <Head>
-                <title>Subject</title>
+                <title>Subject | {user.name || 'Loading Name'}</title>
             </Head>
-            <div className='w-4/5 mx-auto my-5 min-h-full'>
+            <div className='w-4/5 mx-auto my-5 min-h-screen'>
                 <div className='flex flex-col'>
                     <div className='flex flex-row justify-between'>
                         <h1 className='text-3xl font-bold header-text'>Subjects</h1>
@@ -86,8 +87,8 @@ const Subject = () => {
                     <div className='flex flex-row justify-between mt-5'>
                         <div className='flex flex-col w-full'>
                             <div className='flex flex-col mt-5 w-full'>
-                                {(user.isPresent && chapters?.length > 0 ) ? (
-                                    chapters.map((chapter, index) => (
+                                {(user.isPresent && subjects?.length > 0) &&
+                                    subjects.map((chapter, index) => (
                                         <div
                                             key={index}
                                             className='flex flex-col justify-between p-3 shadow-md rounded-sm mb-3 sm:flex-row'>
@@ -126,16 +127,15 @@ const Subject = () => {
                                             </div>
                                         </div>
                                     ))
-                                ) : (
-                                    <div className='flex items-center flex-col justify-center'>
-                                        <p className='mb-4'>No notes are available</p>
-                                        <Loader />
-                                    </div>
-                                )}
-                                {!user.isPresent &&
-                                    <div className='flex items-center flex-col justify-center'>
-                                        <p className='mb-4'>Please Sign In</p>
-                                        <Loader />
+                                }
+
+                                {loadingState && <Loader />}
+                                {!loadingState && subjects?.length === 0 &&
+                                    <div className='flex items-center flex-col justify-center min-h-screen'>
+                                        <p className='mb-4'>
+                                            Oops!!! Looks like you have not created any subject.
+                                            Create to view them here.😊
+                                        </p>
                                     </div>
                                 }
                             </div>
