@@ -4,7 +4,7 @@ import { AiFillPauseCircle } from 'react-icons/ai'
 
 import AudioCard from '../components/AudioCard/AudioCard'
 
-const chillSounds = () => {
+const ChillSounds = () => {
     const [parentIsPlaying, setParentIsPlaying] = useState(false)
     return (
         <div className='relative'>
@@ -42,4 +42,4 @@ const chillSounds = () => {
     )
 }
 
-export default chillSounds
+export default ChillSounds
