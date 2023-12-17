@@ -4,7 +4,7 @@ import { TbBrandTwitter, TbBrandLinkedin, TbBrandGithub, TbBrandChrome } from 'r
 const Footer = () => {
     return (
         <footer className="flex justify-center flex-col items-center w-full bg-theme-ecru-white pb-4">
-            <p className='my-3'>Built with <span className="text-red-500">❤</span> by &nbsp;
+            <p className='my-3'>Built with <span className="text-red-500">❤</span> by&nbsp;
                 <a href="https://www.linkedin.com/in/amit-kumar-sahoo-web/" target="_blank" rel="noreferrer" className="text-theme-ferrari-red hover:underline">
                     Amit Kumar Sahoo
                 </a>

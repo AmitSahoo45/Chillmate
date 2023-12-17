@@ -3,12 +3,12 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from "react-redux";
 import { BsPencilFill, BsEye } from 'react-icons/bs'
-import { AiOutlineDelete, AiOutlineShareAlt } from 'react-icons/ai'
+import { AiOutlineDelete, AiOutlineSearch, AiOutlineShareAlt } from 'react-icons/ai'
 import moment from 'moment/moment';
 import Modal from 'react-modal';
 
 import { Loader } from '../../components';
-import { getSubjects, selectSubjects, deleteSubject, selectLoadingState } from '../../store/slices/subject'
+import { getSubjects, selectSubjects, deleteSubject, selectLoadingState, selectCurrentPage, selectTotalPages } from '../../store/slices/subject'
 import { ContextStore } from '../../constants/context/Context';
 import { toast } from 'react-toastify';
 
@@ -28,7 +28,12 @@ const customStyles = {
 const Subject = () => {
     const [modalIsOpen, setIsOpen] = useState(false)
     const [deleteID, setDeleteID] = useState(null)
+    const [deleteSubjectName, setDeleteSubjectName] = useState(null)
     const [isNoteDeleted, setIsNoteDeleted] = useState(false)
+    const [deleteText, setDeleteText] = useState('')
+
+    const [page, setPage] = useState(1)
+    const [search, setSearch] = useState('')
 
     const dispatch = useDispatch()
     const router = useRouter()
@@ -36,14 +41,20 @@ const Subject = () => {
     const { user } = useContext(ContextStore)
     const { subjects } = useSelector(selectSubjects)
     const loadingState = useSelector(selectLoadingState)
+    const currentPage = useSelector(selectCurrentPage)
+    const totalPages = useSelector(selectTotalPages)
 
-    const toggleModal = (id) => {
+    const toggleModal = (id, name) => {
         setIsOpen(!modalIsOpen)
         setDeleteID(id)
+        setDeleteSubjectName(name)
     }
 
     const DeleteSubject = () => {
         try {
+            if (deleteText !== 'SUDO DELETE')
+                return toast.error('Please type SUDO DELETE to confirm')
+
             dispatch(deleteSubject(deleteID))
             setIsOpen(!modalIsOpen)
             setDeleteID(null)
@@ -61,14 +72,26 @@ const Subject = () => {
 
     useEffect(() => {
         if (user.isPresent)
-            dispatch(getSubjects(user.uid));
+            dispatch(getSubjects({ id: user.uid, page, search }));
     }, [user.isPresent, isNoteDeleted]);
+
+    useEffect(() => {
+        const handleRightClick = (event) => event.preventDefault();
+        const handleKeyDown = (event) => event.preventDefault()
+
+        document.addEventListener('contextmenu', handleRightClick);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('contextmenu', handleRightClick);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     if (!user.isPresent)
         return <div className='flex items-center flex-col justify-center min-h-screen'>
             <p className='mb-4'>Please Sign In to continue</p>
         </div>
-
 
     return (
         <>
@@ -82,9 +105,26 @@ const Subject = () => {
                         <button
                             className='bg-theme-ferrari-red text-white px-4 py-2 rounded-md'
                             onClick={() => router.push('/subject/new')}
-                        >Add Subject</button>
+                        >
+                            Add Subject
+                        </button>
                     </div>
-                    <div className='flex flex-row justify-between mt-5'>
+                    <div className='flex justify-center items-center flex-1 my-5'>
+                        <input
+                            type="text"
+                            placeholder='Search Subject'
+                            className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-full'
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <button
+                            onClick={() => dispatch(getSubjects({ id: user.uid, page: 1, search }))}
+                            className='bg-theme-ferrari-red text-white px-2 py-2 text-2xl rounded-md ml-3'
+                        >
+                            <AiOutlineSearch />
+                        </button>
+                    </div>
+                    <div className='flex flex-row justify-between'>
                         <div className='flex flex-col w-full'>
                             <div className='flex flex-col mt-5 w-full'>
                                 {(user.isPresent && subjects?.length > 0) &&
@@ -118,7 +158,7 @@ const Subject = () => {
                                                 />
                                                 <AiOutlineDelete
                                                     className='mr-3 hover:cursor-pointer'
-                                                    onClick={() => toggleModal(chapter._id)}
+                                                    onClick={() => toggleModal(chapter._id, chapter.Subname)}
                                                 />
                                                 <AiOutlineShareAlt
                                                     className='mr-3 hover:cursor-pointer'
@@ -141,22 +181,57 @@ const Subject = () => {
                             </div>
                         </div>
                     </div>
+
+                    <div className='flex justify-between items-center mt-4 w-full'>
+                        <button
+                            onClick={() => setPage(page - 1)}
+                            disabled={page == 1}
+                            className={`${currentPage === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-theme-ferrari-red'}
+                             text-white px-2 py-1 rounded-md mr-2`}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => setPage(page + 1)}
+                            disabled={page == totalPages}
+                            className={`${currentPage === totalPages | totalPages === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-theme-ferrari-red'} 
+                            text-white px-2 py-1 rounded-md`}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             </div>
             <Modal
                 isOpen={modalIsOpen}
-                onRequestClose={toggleModal}
+                onRequestClose={() => toggleModal(null, null)}
                 style={customStyles}
                 contentLabel="Example Modal"
             >
                 <div className='p-2'>
                     <h3 className='text-center text-2xl font-medium'>Delete Note</h3>
                     <p className='text-center text-lg'>Are you sure you want to
-                        <span className='text-red-600'>&nbsp;delete this subject?</span>
+                        <span className='text-red-600'>
+                            &nbsp;delete
+                        </span>
+                        <span className='text-red-600'>
+                            &nbsp;{deleteSubjectName}
+                        </span>
                     </p>
+                    <p className='text-center font-medium'>All notes under this subject will be deleted.</p>
+                    <div>
+                        <input
+                            type="text"
+                            placeholder='Type SUDO DELETE to confirm'
+                            className='border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-ferrari-red focus:border-transparent w-full mt-3'
+                            value={deleteText}
+                            onChange={(e) => setDeleteText(e.target.value)}
+                            required
+                        />
+                    </div>
                     <div className='flex justify-center mt-4'>
                         <button
-                            onClick={toggleModal}
+                            onClick={() => toggleModal(null, null)}
                             className='border-2 px-4 py-2 rounded-md mr-2'>
                             Cancel
                         </button>

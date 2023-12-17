@@ -3,12 +3,14 @@ import axios from 'axios';
 
 const initialState = {
     Notes: [],
+    currentPage: 1,
+    totalPages: 1,
     loading: false,
     error: null
 };
 
-export const getNotes = createAsyncThunk('notes/all', async (id) => {
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/${id}`)
+export const getNotes = createAsyncThunk('notes/all', async ({ id, search, page }) => {
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/subject/${id}?search=${search}&page=${page}`)
     return data;
 })
 
@@ -32,7 +34,9 @@ const notesSlice = createSlice({
             })
             .addCase(getNotes.fulfilled, (state, action) => {
                 state.loading = false;
-                state.Notes = action.payload;
+                state.Notes = action.payload.notes;
+                state.currentPage = action.payload.currentPage;
+                state.totalPages = action.payload.numberOfPages;
             })
             .addCase(getNotes.rejected, (state, action) => {
                 state.loading = false;
@@ -43,5 +47,7 @@ const notesSlice = createSlice({
 
 export const selectNotes = state => state.notes.Notes
 export const selectLoadingState = state => state.notes.loading
+export const selectCurrentPage = state => state.notes.currentPage
+export const selectTotalPages = state => state.notes.totalPages
 
 export default notesSlice.reducer;

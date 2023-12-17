@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic'
 import { Provider } from 'react-redux';
+import { Analytics } from '@vercel/analytics/react';
 
 import { wrapper } from '../store/store';
 
@@ -24,6 +25,7 @@ function MyApp({ Component, ...rest }) {
           <Alert />
         </ProviderContext>
       </Provider>
+      <Analytics />
     </>
   )
 }

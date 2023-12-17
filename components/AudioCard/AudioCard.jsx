@@ -21,7 +21,7 @@ const FileRoots = {
 }
 
 const AudioCard = props => {
-    const { Icon, audioName, Alt } = props || {}
+    const { Icon, audioName, Alt, parentIsPlaying, setParentIsPlaying } = props || {}
 
     const { isAudioPlaying } = useContext(ContextStore)
     const [isPlaying, setIsPlaying] = useState(false)
@@ -33,21 +33,15 @@ const AudioCard = props => {
 
     useEffect(() => {
         if (audio) {
-            if (!isAudioPlaying)
+            if (!isAudioPlaying){
                 audio.pause();
-            else if (isAudioPlaying && isPlaying)
+            }
+            else if (isAudioPlaying && isPlaying){
+                setParentIsPlaying(true)
                 audio.play();
+            }
         }
     }, [isAudioPlaying, isPlaying, audio])
-
-    useEffect(() => {
-        if (audio) {
-            if (isPlaying && isAudioPlaying)
-                audio.play()
-            else
-                audio.pause()
-        }
-    }, [isPlaying, audio, isAudioPlaying])
 
     const toggleActive = () => {
         if (!audio) {
