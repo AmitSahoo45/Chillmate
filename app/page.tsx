@@ -1,6 +1,9 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
+import { auth, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { isGoogleAuthConfigured } from "@/lib/env";
 
 function GoogleMark() {
   return (
@@ -25,7 +28,14 @@ function GoogleMark() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/app");
+  }
+
+  const googleReady = isGoogleAuthConfigured();
+
   return (
     <div className="grid min-h-svh lg:grid-cols-[1.1fr_0.9fr]">
       <section className="relative hidden overflow-hidden bg-theme-forest-green text-theme-ecru-white lg:flex">
@@ -95,15 +105,33 @@ export default function Home() {
             <p className="mt-2 text-base leading-relaxed text-theme-forest-green/75">
               Continue with Google to open notes, interviews, jobs, and focus.
             </p>
-            <Button
-              size="lg"
-              disabled
-              className="mt-8 h-12 w-full gap-2 rounded-xl border border-[#dadce0] bg-white text-base font-medium text-[#3c4043] disabled:opacity-100 disabled:shadow-sm"
-              title="Google sign-in is not wired yet"
-            >
-              <GoogleMark />
-              Continue with Google
-            </Button>
+            {googleReady ? (
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("google", { redirectTo: "/app" });
+                }}
+              >
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="mt-8 h-12 w-full gap-2 rounded-xl border border-[#dadce0] bg-white text-base font-medium text-[#3c4043] hover:bg-white"
+                >
+                  <GoogleMark />
+                  Continue with Google
+                </Button>
+              </form>
+            ) : (
+              <Button
+                size="lg"
+                disabled
+                className="mt-8 h-12 w-full gap-2 rounded-xl border border-[#dadce0] bg-white text-base font-medium text-[#3c4043] disabled:opacity-100 disabled:shadow-sm"
+                title="Add AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET in .env.local"
+              >
+                <GoogleMark />
+                Continue with Google
+              </Button>
+            )}
             <p className="mt-4 text-center text-xs text-theme-forest-green/55">
               One account. Your work stays private.
             </p>
