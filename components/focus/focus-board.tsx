@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 
+import { PendingSubmit } from "@/components/notes/pending-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWorkspaceState } from "@/components/workspace/workspace-state";
@@ -80,7 +81,9 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
           </div>
         </div>
         <div className="flex justify-center">
-          <Button onClick={togglePause}>{isPaused ? "Start" : "Pause"}</Button>
+          <Button variant="accent" onClick={togglePause}>
+            {isPaused ? "Start" : "Pause"}
+          </Button>
         </div>
         <form
           className="grid grid-cols-3 gap-2 text-sm"
@@ -116,23 +119,23 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
           <h2 className="text-lg font-semibold">Tasks</h2>
           <form action={createTaskAction} className="mt-2 flex gap-2">
             <Input name="text" placeholder="Add a task" required />
-            <Button type="submit">Add</Button>
+            <PendingSubmit label="Add" pendingLabel="Adding…" />
           </form>
           <ul className="mt-3 space-y-2">
             {tasks.map((task) => (
               <li key={task.id} className="flex items-center gap-2 text-sm">
                 <form action={toggleTaskAction.bind(null, task.id)}>
-                  <button type="submit" className="rounded border px-2 py-1">
+                  <Button type="submit" size="xs" variant="outline">
                     {task.completed ? "Undo" : "Done"}
-                  </button>
+                  </Button>
                 </form>
                 <span className={task.completed ? "text-muted-foreground line-through" : ""}>
                   {task.text}
                 </span>
                 <form action={deleteTaskAction.bind(null, task.id)}>
-                  <button type="submit" className="text-destructive">
+                  <Button type="submit" size="xs" variant="destructive">
                     Delete
-                  </button>
+                  </Button>
                 </form>
               </li>
             ))}

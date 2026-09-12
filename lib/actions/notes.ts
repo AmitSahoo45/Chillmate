@@ -27,13 +27,18 @@ export async function dumpNoteAction(formData: FormData) {
   const userId = await requireUserId();
   const rawSubjectId = String(formData.get("subjectId") ?? "").trim();
   const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
-  const subject =
-    rawSubjectId && isUuid(rawSubjectId)
-      ? await getSubject(userId, rawSubjectId)
-      : await getOrCreateInbox(userId);
+  const subjectHint = rawSubjectId && isUuid(rawSubjectId) ? rawSubjectId : "";
+
+  if (!bodyMarkdown.trim()) {
+    redirect(subjectHint ? `/app/notes/${subjectHint}` : "/app/notes");
+  }
+
+  let subject = subjectHint ? await getSubject(userId, subjectHint) : null;
+  if (!subject) {
+    subject = await getOrCreateInbox(userId);
+  }
   if (!subject) redirect("/app/notes");
-  // Empty submit (accidental Enter) must not create a junk timestamp note.
-  if (!bodyMarkdown.trim()) redirect(`/app/notes/${subject.id}`);
+
   const title = noteTitle("", bodyMarkdown);
   const row = await createNote(userId, {
     subjectId: subject.id,
@@ -51,8 +56,14 @@ export async function dumpNoteAction(formData: FormData) {
 
 export async function createNoteAction(subjectId: string, formData: FormData) {
   const userId = await requireUserId();
+  if (!isUuid(subjectId)) redirect("/app/notes");
   const subject = await getSubject(userId, subjectId);
   if (!subject) redirect("/app/notes");
+  const rawTitle = String(formData.get("title") ?? "").trim();
+  const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
+  if (!rawTitle && !bodyMarkdown.trim()) {
+    redirect(`/app/notes/${subjectId}`);
+  }
   const data = readNoteForm(formData);
   const row = await createNote(userId, { subjectId, ...data });
   if (!row) redirect("/app/notes");
@@ -63,6 +74,7 @@ export async function createNoteAction(subjectId: string, formData: FormData) {
 
 export async function updateNoteAction(id: string, formData: FormData) {
   const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/notes");
   const existing = await getNote(userId, id);
   if (!existing) redirect("/app/notes");
   const data = readNoteForm(formData);
@@ -72,8 +84,28 @@ export async function updateNoteAction(id: string, formData: FormData) {
   revalidatePath(`/app/notes/${existing.subjectId}/${id}`);
 }
 
+export async function moveNoteAction(noteId: string, formData: FormData) {
+  const userId = await requireUserId();
+  const subjectId = String(formData.get("subjectId") ?? "").trim();
+  if (!isUuid(noteId) || !isUuid(subjectId)) redirect("/app/notes");
+  const existing = await getNote(userId, noteId);
+  if (!existing) redirect("/app/notes");
+  const currentUrl = `/app/notes/${existing.subjectId}/${noteId}`;
+  const target = await getSubject(userId, subjectId);
+  if (!target) redirect(currentUrl);
+  if (subjectId === existing.subjectId) redirect(currentUrl);
+  await updateNote(userId, noteId, { subjectId });
+  revalidatePath("/app");
+  revalidatePath("/app/notes");
+  revalidatePath(`/app/notes/${existing.subjectId}`);
+  revalidatePath(`/app/notes/${subjectId}`);
+  revalidatePath(`/app/notes/${subjectId}/${noteId}`);
+  redirect(`/app/notes/${subjectId}/${noteId}`);
+}
+
 export async function deleteNoteAction(id: string) {
   const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/notes");
   const existing = await getNote(userId, id);
   if (!existing) redirect("/app/notes");
   await deleteNote(userId, id);

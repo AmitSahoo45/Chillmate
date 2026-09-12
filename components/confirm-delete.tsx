@@ -26,7 +26,7 @@ export function ConfirmDelete({
   return (
     <AlertDialog>
       <AlertDialogTrigger
-        className={cn(buttonVariants({ variant: "destructive", size: "sm" }))}
+        className={cn(buttonVariants({ variant: "destructive", size: "xs" }))}
       >
         Delete
       </AlertDialogTrigger>

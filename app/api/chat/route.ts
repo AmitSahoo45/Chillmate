@@ -180,14 +180,17 @@ export async function POST(req: Request) {
         description: "Create an interview error sheet",
         inputSchema: z.object({
           probName: z.string(),
-          probLink: z.string(),
+          probLink: z.string().optional(),
           mistake: z.string(),
           improvement: z.string().optional(),
           tags: z.string().optional(),
         }),
         execute: async (input) =>
           createErrorSheet(userId, {
-            ...input,
+            probName: input.probName,
+            probLink: input.probLink ?? "",
+            mistake: input.mistake,
+            improvement: input.improvement,
             tags: parseTags(input.tags ?? ""),
           }),
       }),

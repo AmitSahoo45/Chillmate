@@ -5,10 +5,17 @@ import { errorSheets } from "@/lib/db/schema";
 import { matchesQuery } from "@/lib/tags";
 
 export type BeforeInterviewFilter = "all" | "yes" | "no" | "maybe";
+export type PriorityFilter = "all" | "high" | "medium" | "low";
+
+const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const;
 
 export async function listErrorSheets(
   userId: string,
-  opts: { query?: string; lookup?: BeforeInterviewFilter } = {},
+  opts: {
+    query?: string;
+    lookup?: BeforeInterviewFilter;
+    priority?: PriorityFilter;
+  } = {},
 ) {
   const rows = await db
     .select()
@@ -17,14 +24,33 @@ export async function listErrorSheets(
     .orderBy(desc(errorSheets.updatedAt));
 
   const lookup = opts.lookup ?? "all";
+  const priority = opts.priority ?? "all";
   const query = opts.query ?? "";
 
-  return rows.filter((row) => {
-    if (lookup !== "all" && row.beforeInterviewLookup !== lookup) {
-      return false;
-    }
-    return matchesQuery(query, [row.probName, row.tags]);
-  });
+  return rows
+    .filter((row) => {
+      if (lookup !== "all" && row.beforeInterviewLookup !== lookup) {
+        return false;
+      }
+      if (priority !== "all" && row.revisionPriority !== priority) {
+        return false;
+      }
+      return matchesQuery(query, [
+        row.probName,
+        row.mistake,
+        row.improvement,
+        row.tags,
+      ]);
+    })
+    .sort((a, b) => {
+      if (a.isMistakeCorrected !== b.isMistakeCorrected) {
+        return a.isMistakeCorrected ? 1 : -1;
+      }
+      const rank =
+        PRIORITY_RANK[a.revisionPriority] - PRIORITY_RANK[b.revisionPriority];
+      if (rank !== 0) return rank;
+      return b.updatedAt.getTime() - a.updatedAt.getTime();
+    });
 }
 
 export async function getErrorSheet(userId: string, id: string) {
@@ -58,8 +84,6 @@ export async function createErrorSheet(
       mistake: data.mistake,
       improvement: data.improvement ?? "",
       isMistakeCorrected: data.isMistakeCorrected ?? false,
-      // App-level canonical defaults (UI creates High/Yes). The DB-level
-      // low/no defaults in schema.ts are only a safety net for raw inserts.
       revisionPriority: data.revisionPriority ?? "high",
       beforeInterviewLookup: data.beforeInterviewLookup ?? "yes",
       tags: data.tags,

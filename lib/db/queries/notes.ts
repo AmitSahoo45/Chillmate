@@ -87,8 +87,17 @@ export async function updateNote(
     description?: string;
     bodyMarkdown?: string;
     tags?: string[];
+    subjectId?: string;
   },
 ) {
+  if (data.subjectId !== undefined) {
+    const [subject] = await db
+      .select({ id: subjects.id })
+      .from(subjects)
+      .where(and(eq(subjects.id, data.subjectId), eq(subjects.userId, userId)))
+      .limit(1);
+    if (!subject) return null;
+  }
   const [row] = await db
     .update(notes)
     .set(data)

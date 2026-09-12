@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listFollowUpJobs } from "@/lib/db/queries/jobs";
 import { listRecentNotes } from "@/lib/db/queries/notes";
+import { listSubjects } from "@/lib/db/queries/subjects";
 import { listOpenTasks } from "@/lib/db/queries/tasks";
 import { withDb } from "@/lib/db/safe";
 import { requireUserId } from "@/lib/session";
 
 export default async function HomePage() {
   const userId = await requireUserId();
-  const [tasks, notes, jobs] = await Promise.all([
+  const [tasks, notes, jobs, subjects] = await Promise.all([
     withDb([], () => listOpenTasks(userId)),
     withDb([], () => listRecentNotes(userId)),
     withDb([], () => listFollowUpJobs(userId)),
+    withDb([], () => listSubjects(userId)),
   ]);
 
   return (
@@ -25,7 +27,7 @@ export default async function HomePage() {
         </p>
         <h1 className="mt-2 text-3xl font-semibold">Workspace</h1>
       </div>
-      <QuickDump compact />
+      <QuickDump compact subjects={subjects} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center justify-between">

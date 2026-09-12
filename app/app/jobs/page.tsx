@@ -1,4 +1,5 @@
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { PendingSubmit } from "@/components/notes/pending-submit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,9 +112,7 @@ export default async function JobsPage({
                   <option value="oncampus">On campus</option>
                   <option value="offcampus">Off campus</option>
                 </select>
-                <Button type="submit" size="sm">
-                  Save
-                </Button>
+                <PendingSubmit label="Save" size="sm" />
               </form>
               <ConfirmDelete
                 label={`${job.company} ${job.position}`}
@@ -162,7 +161,7 @@ export default async function JobsPage({
                 <option value="offcampus">Off campus</option>
               </select>
             </div>
-            <Button type="submit">Add</Button>
+            <PendingSubmit label="Add" pendingLabel="Adding…" />
           </form>
         </CardContent>
       </Card>

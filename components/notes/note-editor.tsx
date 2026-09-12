@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { MarkdownPreview } from "@/components/markdown-preview";
+import { PendingSubmit } from "@/components/notes/pending-submit";
 import { WriteSprint } from "@/components/notes/write-sprint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -380,13 +381,6 @@ export function NoteEditor({
       </div>
 
       <div className={zen ? "mx-auto w-full max-w-2xl" : "grid gap-4 lg:grid-cols-2"}>
-        {zen ? (
-          <>
-            <input type="hidden" name="title" value={title} />
-            <input type="hidden" name="description" value={description} />
-            <input type="hidden" name="tags" value={tags} />
-          </>
-        ) : null}
         <div className="space-y-1">
           <Label htmlFor="bodyMarkdown">Write</Label>
           <Textarea
@@ -409,7 +403,7 @@ export function NoteEditor({
         ) : null}
       </div>
       <div className="flex items-center gap-3">
-        <Button type="submit">{submitLabel}</Button>
+        <PendingSubmit label={submitLabel} />
         <span className="text-sm text-muted-foreground" aria-live="polite">
           {dirty
             ? "Unsaved — Ctrl+S"

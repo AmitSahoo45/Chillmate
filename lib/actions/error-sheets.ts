@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/queries/error-sheets";
 import { requireUserId } from "@/lib/session";
 import { parseTags } from "@/lib/tags";
+import { isUuid } from "@/lib/uuid";
 
 function asPriority(value: string): "high" | "medium" | "low" {
   if (value === "high" || value === "medium" || value === "low") return value;
@@ -35,8 +36,8 @@ function readSheetForm(formData: FormData) {
     String(formData.get("beforeInterviewLookup") ?? "yes"),
   );
   const tags = parseTags(String(formData.get("tags") ?? ""));
-  if (!probName || !probLink || !mistake) {
-    throw new Error("Problem name, link, and mistake are required.");
+  if (!probName || !mistake) {
+    throw new Error("Problem name and mistake are required.");
   }
   return {
     probName,
@@ -60,6 +61,7 @@ export async function createErrorSheetAction(formData: FormData) {
 
 export async function updateErrorSheetAction(id: string, formData: FormData) {
   const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/interview");
   const existing = await getErrorSheet(userId, id);
   if (!existing) redirect("/app/interview");
   const data = readSheetForm(formData);
@@ -70,6 +72,7 @@ export async function updateErrorSheetAction(id: string, formData: FormData) {
 
 export async function deleteErrorSheetAction(id: string) {
   const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/interview");
   await deleteErrorSheet(userId, id);
   revalidatePath("/app/interview");
   redirect("/app/interview");
