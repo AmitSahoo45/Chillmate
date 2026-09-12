@@ -5,12 +5,16 @@ import { revalidatePath } from "next/cache";
 import {
   createJob,
   deleteJob,
+  getJob,
+  nudgeJob,
+  setJobPinned,
   updateJob,
   type Campus,
   type JobStatus,
 } from "@/lib/db/queries/jobs";
 import { parseDateOnly } from "@/lib/date";
 import { requireUserId } from "@/lib/session";
+import { isUuid } from "@/lib/uuid";
 
 function asStatus(value: string): JobStatus {
   const allowed: JobStatus[] = [
@@ -62,6 +66,24 @@ export async function updateJobAction(id: string, formData: FormData) {
 export async function deleteJobAction(id: string) {
   const userId = await requireUserId();
   await deleteJob(userId, id);
+  revalidatePath("/app/jobs");
+  revalidatePath("/app");
+}
+
+export async function nudgeJobAction(id: string) {
+  const userId = await requireUserId();
+  if (!isUuid(id)) return;
+  await nudgeJob(userId, id);
+  revalidatePath("/app/jobs");
+  revalidatePath("/app");
+}
+
+export async function pinJobAction(id: string) {
+  const userId = await requireUserId();
+  if (!isUuid(id)) return;
+  const existing = await getJob(userId, id);
+  if (!existing) return;
+  await setJobPinned(userId, id, !existing.pinnedAt);
   revalidatePath("/app/jobs");
   revalidatePath("/app");
 }

@@ -3,9 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTags } from "@/lib/tags";
-
-const SELECT_CLASS =
-  "h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+import { cn, SELECT_CLASS } from "@/lib/utils";
 
 type SheetDefaults = {
   probName: string;
@@ -36,7 +34,7 @@ function ExtraFields({ defaults }: { defaults?: SheetDefaults }) {
             id="revisionPriority"
             name="revisionPriority"
             defaultValue={defaults?.revisionPriority ?? "high"}
-            className={SELECT_CLASS}
+            className={cn(SELECT_CLASS, "w-full")}
           >
             <option value="high">High</option>
             <option value="medium">Medium</option>
@@ -49,7 +47,7 @@ function ExtraFields({ defaults }: { defaults?: SheetDefaults }) {
             id="beforeInterviewLookup"
             name="beforeInterviewLookup"
             defaultValue={defaults?.beforeInterviewLookup ?? "yes"}
-            className={SELECT_CLASS}
+            className={cn(SELECT_CLASS, "w-full")}
           >
             <option value="yes">Yes</option>
             <option value="no">No</option>

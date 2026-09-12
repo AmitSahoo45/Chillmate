@@ -14,10 +14,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useWorkspaceState } from "@/components/workspace/workspace-state";
 import { confirmDeleteAction, type DeletableType } from "@/lib/actions/delete";
+import { confirmMoveAction } from "@/lib/actions/notes";
 import type { CopilotMessage } from "@/lib/db/schema";
 import type { AmbientTrackId } from "@/lib/focus/tracks";
 
@@ -50,7 +52,11 @@ export function CopilotPanel({
   }, []);
 
   const chat = (
-    <CopilotChat geminiReady={geminiReady} initialMessages={initialMessages} />
+    <CopilotChat
+      geminiReady={geminiReady}
+      initialMessages={initialMessages}
+      onClose={() => onOpenChange(false)}
+    />
   );
 
   return (
@@ -72,12 +78,15 @@ export function CopilotPanel({
 function CopilotChat({
   geminiReady,
   initialMessages,
+  onClose,
 }: {
   geminiReady: boolean;
   initialMessages: CopilotMessage[];
+  onClose: () => void;
 }) {
   const [input, setInput] = useState("");
   const [dismissedDeleteId, setDismissedDeleteId] = useState<string | null>(null);
+  const [dismissedMoveKey, setDismissedMoveKey] = useState<string | null>(null);
   const { setPomodoroMinutes, toggleTrack, tracks } = useWorkspaceState();
   const seed = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
   const { messages, sendMessage, status } = useChat({
@@ -118,11 +127,44 @@ function CopilotChat({
     return null;
   }, [messages, dismissedDeleteId]);
 
+  const moveProposal = useMemo(() => {
+    for (const message of messages) {
+      for (const part of message.parts) {
+        if (part.type === "tool-proposeMove" && "output" in part && part.output) {
+          const output = part.output as {
+            noteId?: string;
+            subjectId?: string;
+            noteLabel?: string;
+            subjectName?: string;
+            error?: string;
+          };
+          if (!output.noteId || !output.subjectId || output.error) continue;
+          const key = `${output.noteId}:${output.subjectId}`;
+          if (key !== dismissedMoveKey) {
+            return { ...output, key } as {
+              noteId: string;
+              subjectId: string;
+              noteLabel: string;
+              subjectName: string;
+              key: string;
+            };
+          }
+        }
+      }
+    }
+    return null;
+  }, [messages, dismissedMoveKey]);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-border px-4 py-3">
-        <p className="text-sm font-semibold">Copilot</p>
-        <p className="text-xs text-muted-foreground">⌘K / Ctrl+K</p>
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold">Copilot</p>
+          <p className="text-xs text-muted-foreground">⌘K / Ctrl+K</p>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+          Close
+        </Button>
       </div>
       {!geminiReady ? (
         <p className="m-4 rounded-lg bg-theme-orange/20 px-3 py-2 text-sm">
@@ -133,7 +175,7 @@ function CopilotChat({
       <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4 text-sm">
         {messages.length === 0 ? (
           <p className="text-muted-foreground">
-            Ask for notes, jobs, tasks, or interview sheets.
+            Ask to dump, triage Inbox, quiz a mistake, or pick 15 minutes.
           </p>
         ) : null}
         {messages.map((message) => (
@@ -180,12 +222,21 @@ function CopilotChat({
           setInput("");
         }}
       >
-        <Input
-          value={input}
-          onChange={(event) => setInput(event.currentTarget.value)}
-          placeholder={geminiReady ? "Ask Chillmate…" : "Gemini key missing"}
-          disabled={!geminiReady || status === "streaming"}
-        />
+        <div className="flex gap-2">
+          <Input
+            value={input}
+            onChange={(event) => setInput(event.currentTarget.value)}
+            placeholder={geminiReady ? "Ask Chillmate…" : "Gemini key missing"}
+            disabled={!geminiReady || status === "streaming"}
+          />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!geminiReady || status === "streaming" || !input.trim()}
+          >
+            Send
+          </Button>
+        </div>
       </form>
       <AlertDialog
         open={!!proposal}
@@ -212,6 +263,35 @@ function CopilotChat({
               }}
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={!!moveProposal}
+        onOpenChange={(next) => {
+          if (!next && moveProposal) setDismissedMoveKey(moveProposal.key);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Move {moveProposal?.noteLabel} to {moveProposal?.subjectName}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Copilot cannot move notes on its own. Confirm to file this note.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!moveProposal) return;
+                await confirmMoveAction(moveProposal.noteId, moveProposal.subjectId);
+                setDismissedMoveKey(moveProposal.key);
+              }}
+            >
+              Move
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

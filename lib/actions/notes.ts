@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { createTask } from "@/lib/db/queries/tasks";
 import {
   createNote,
   deleteNote,
   getNote,
+  setNoteArchived,
+  setNotePinned,
   updateNote,
 } from "@/lib/db/queries/notes";
 import { getOrCreateInbox, getSubject } from "@/lib/db/queries/subjects";
@@ -54,6 +57,17 @@ export async function dumpNoteAction(formData: FormData) {
   redirect(`/app/notes/${subject.id}/${row.id}`);
 }
 
+export async function dumpTaskAction(formData: FormData) {
+  const userId = await requireUserId();
+  const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
+  const text = noteTitle("", bodyMarkdown);
+  if (!bodyMarkdown.trim()) redirect("/app");
+  await createTask(userId, text);
+  revalidatePath("/app");
+  revalidatePath("/app/focus");
+  redirect("/app/focus");
+}
+
 export async function createNoteAction(subjectId: string, formData: FormData) {
   const userId = await requireUserId();
   if (!isUuid(subjectId)) redirect("/app/notes");
@@ -84,6 +98,29 @@ export async function updateNoteAction(id: string, formData: FormData) {
   revalidatePath(`/app/notes/${existing.subjectId}/${id}`);
 }
 
+function refreshMovePaths(from: string, to: string, noteId: string) {
+  revalidatePath("/app");
+  revalidatePath("/app/notes");
+  revalidatePath(`/app/notes/${from}`);
+  revalidatePath(`/app/notes/${to}`);
+  revalidatePath(`/app/notes/${to}/${noteId}`);
+}
+
+async function moveOwnedNote(userId: string, noteId: string, subjectId: string) {
+  if (!isUuid(noteId) || !isUuid(subjectId)) return null;
+  const existing = await getNote(userId, noteId);
+  if (!existing) return null;
+  if (subjectId === existing.subjectId) {
+    return { from: existing.subjectId, to: subjectId, noteId, skipped: true };
+  }
+  const target = await getSubject(userId, subjectId);
+  if (!target) return null;
+  const row = await updateNote(userId, noteId, { subjectId });
+  if (!row) return null;
+  refreshMovePaths(existing.subjectId, subjectId, noteId);
+  return { from: existing.subjectId, to: subjectId, noteId, skipped: false };
+}
+
 export async function moveNoteAction(noteId: string, formData: FormData) {
   const userId = await requireUserId();
   const subjectId = String(formData.get("subjectId") ?? "").trim();
@@ -91,16 +128,53 @@ export async function moveNoteAction(noteId: string, formData: FormData) {
   const existing = await getNote(userId, noteId);
   if (!existing) redirect("/app/notes");
   const currentUrl = `/app/notes/${existing.subjectId}/${noteId}`;
-  const target = await getSubject(userId, subjectId);
-  if (!target) redirect(currentUrl);
-  if (subjectId === existing.subjectId) redirect(currentUrl);
-  await updateNote(userId, noteId, { subjectId });
+  const moved = await moveOwnedNote(userId, noteId, subjectId);
+  if (!moved) redirect(currentUrl);
+  redirect(`/app/notes/${moved.to}/${noteId}`);
+}
+
+export async function confirmMoveAction(noteId: string, subjectId: string) {
+  const userId = await requireUserId();
+  await moveOwnedNote(userId, noteId, subjectId);
+}
+
+export async function moveNotesAction(formData: FormData) {
+  const userId = await requireUserId();
+  const subjectId = String(formData.get("subjectId") ?? "").trim();
+  const ids = formData
+    .getAll("noteId")
+    .map((value) => String(value))
+    .filter((id) => isUuid(id))
+    .slice(0, 10);
+  if (!isUuid(subjectId) || ids.length === 0) redirect("/app/notes");
+  let lastFrom = "";
+  for (const noteId of ids) {
+    const moved = await moveOwnedNote(userId, noteId, subjectId);
+    if (moved) lastFrom = moved.from;
+  }
+  redirect(lastFrom ? `/app/notes/${subjectId}` : "/app/notes");
+}
+
+export async function archiveNoteAction(id: string) {
+  const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/notes");
+  const existing = await getNote(userId, id);
+  if (!existing) redirect("/app/notes");
+  await setNoteArchived(userId, id, !existing.archivedAt);
   revalidatePath("/app");
   revalidatePath("/app/notes");
   revalidatePath(`/app/notes/${existing.subjectId}`);
-  revalidatePath(`/app/notes/${subjectId}`);
-  revalidatePath(`/app/notes/${subjectId}/${noteId}`);
-  redirect(`/app/notes/${subjectId}/${noteId}`);
+  revalidatePath(`/app/notes/${existing.subjectId}/${id}`);
+}
+
+export async function pinNoteAction(id: string) {
+  const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/notes");
+  const existing = await getNote(userId, id);
+  if (!existing) redirect("/app/notes");
+  await setNotePinned(userId, id, !existing.pinnedAt);
+  revalidatePath("/app");
+  revalidatePath(`/app/notes/${existing.subjectId}`);
 }
 
 export async function deleteNoteAction(id: string) {

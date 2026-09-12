@@ -1,18 +1,31 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { notes, subjects } from "@/lib/db/schema";
+import { isInboxName } from "@/lib/notes/title";
+import { PIN_LIMIT } from "@/lib/pins";
 import { matchesQuery } from "@/lib/tags";
+
+function archiveWhere(archived: boolean) {
+  return archived ? isNotNull(notes.archivedAt) : isNull(notes.archivedAt);
+}
 
 export async function listNotes(
   userId: string,
   subjectId: string,
   query = "",
+  archived = false,
 ) {
   const rows = await db
     .select()
     .from(notes)
-    .where(and(eq(notes.userId, userId), eq(notes.subjectId, subjectId)))
+    .where(
+      and(
+        eq(notes.userId, userId),
+        eq(notes.subjectId, subjectId),
+        archiveWhere(archived),
+      ),
+    )
     .orderBy(desc(notes.updatedAt));
 
   return rows.filter((row) =>
@@ -24,20 +37,62 @@ export async function listRecentNotes(userId: string, limit = 5) {
   return db
     .select()
     .from(notes)
-    .where(eq(notes.userId, userId))
+    .where(and(eq(notes.userId, userId), isNull(notes.archivedAt)))
     .orderBy(desc(notes.updatedAt))
     .limit(limit);
 }
 
-export async function listAllNotes(userId: string, query = "") {
+export async function listAllNotes(userId: string, query = "", archived = false) {
   const rows = await db
     .select()
     .from(notes)
-    .where(eq(notes.userId, userId))
+    .where(and(eq(notes.userId, userId), archiveWhere(archived)))
     .orderBy(desc(notes.updatedAt));
   return rows.filter((row) =>
     matchesQuery(query, [row.title, row.description, row.bodyMarkdown, row.tags]),
   );
+}
+
+export async function listPinnedNotes(userId: string) {
+  return db
+    .select()
+    .from(notes)
+    .where(
+      and(
+        eq(notes.userId, userId),
+        isNotNull(notes.pinnedAt),
+        isNull(notes.archivedAt),
+      ),
+    )
+    .orderBy(desc(notes.pinnedAt))
+    .limit(PIN_LIMIT);
+}
+
+export async function inboxSummary(userId: string) {
+  const rows = await db
+    .select()
+    .from(subjects)
+    .where(eq(subjects.userId, userId));
+  const inbox = rows.find((row) => isInboxName(row.name));
+  if (!inbox) {
+    return { subjectId: null as string | null, total: 0, weekCount: 0 };
+  }
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const active = await db
+    .select({ id: notes.id, updatedAt: notes.updatedAt })
+    .from(notes)
+    .where(
+      and(
+        eq(notes.userId, userId),
+        eq(notes.subjectId, inbox.id),
+        isNull(notes.archivedAt),
+      ),
+    );
+  return {
+    subjectId: inbox.id,
+    total: active.length,
+    weekCount: active.filter((row) => row.updatedAt > weekAgo).length,
+  };
 }
 
 export async function getNote(userId: string, id: string) {
@@ -101,6 +156,52 @@ export async function updateNote(
   const [row] = await db
     .update(notes)
     .set(data)
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+    .returning();
+  return row ?? null;
+}
+
+export async function setNoteArchived(
+  userId: string,
+  id: string,
+  archived: boolean,
+) {
+  const [row] = await db
+    .update(notes)
+    .set({ archivedAt: archived ? new Date() : null })
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+    .returning();
+  return row ?? null;
+}
+
+export async function setNotePinned(userId: string, id: string, pinned: boolean) {
+  const existing = await getNote(userId, id);
+  if (!existing) return null;
+  if (!pinned) {
+    const [row] = await db
+      .update(notes)
+      .set({ pinnedAt: null })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return row ?? null;
+  }
+  if (existing.pinnedAt) return existing;
+  const pinnedRows = await db
+    .select({ id: notes.id })
+    .from(notes)
+    .where(and(eq(notes.userId, userId), isNotNull(notes.pinnedAt)))
+    .orderBy(asc(notes.pinnedAt));
+  if (pinnedRows.length >= PIN_LIMIT) {
+    await db
+      .update(notes)
+      .set({ pinnedAt: null })
+      .where(
+        and(eq(notes.id, pinnedRows[0].id), eq(notes.userId, userId)),
+      );
+  }
+  const [row] = await db
+    .update(notes)
+    .set({ pinnedAt: new Date() })
     .where(and(eq(notes.id, id), eq(notes.userId, userId)))
     .returning();
   return row ?? null;

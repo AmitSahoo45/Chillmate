@@ -2,6 +2,7 @@ import { PendingSubmit } from "@/components/notes/pending-submit";
 import { Label } from "@/components/ui/label";
 import { moveNoteAction } from "@/lib/actions/notes";
 import { isInboxName } from "@/lib/notes/title";
+import { cn, SELECT_CLASS } from "@/lib/utils";
 
 export function MoveNoteForm({
   noteId,
@@ -36,7 +37,7 @@ export function MoveNoteForm({
         name="subjectId"
         defaultValue={currentSubjectId}
         aria-label="Move to subject"
-        className="h-8 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className={cn(SELECT_CLASS, "flex-1")}
       >
         {ordered.map((subject) => (
           <option key={subject.id} value={subject.id}>
@@ -47,7 +48,8 @@ export function MoveNoteForm({
       <PendingSubmit
         label="Move"
         pendingLabel="Moving…"
-        size={compact ? "xs" : "default"}
+        variant="outline"
+        size={compact ? "xs" : "sm"}
       />
     </form>
   );

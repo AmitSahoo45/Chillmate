@@ -24,12 +24,14 @@ import {
 } from "@/lib/db/queries/jobs";
 import {
   createNote,
+  getNote,
   listAllNotes,
   listNotes,
   updateNote,
 } from "@/lib/db/queries/notes";
 import {
   createSubject,
+  getSubject,
   listSubjects,
 } from "@/lib/db/queries/subjects";
 import { createTask, listTasks, toggleTask } from "@/lib/db/queries/tasks";
@@ -94,7 +96,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: google("gemini-2.5-flash"),
     system:
-      "You are Chillmate copilot inside a private study/job workspace. Use tools to read and write the user's notes, interview sheets, jobs, and tasks. Never delete anything yourself — call proposeDelete and wait for UI confirmation. You may call playAmbient or setPomodoroMinutes for Focus controls.",
+      "You are Chillmate copilot inside a private study/job workspace. Use tools to read and write the user's notes, interview sheets, jobs, and tasks. Never delete anything yourself — call proposeDelete and wait for UI confirmation. Never move notes yourself — call proposeMove and wait for UI confirmation. If the user asks to triage Inbox, list Inbox notes and proposeMove each to a fitting subject. If they ask to quiz on interview mistakes, listErrorSheets and quiz on uncorrected high-priority items one at a time. If they ask what to do for 15 minutes, use listTasks and uncorrected error sheets and pick one small action. You may call playAmbient or setPomodoroMinutes for Focus controls.",
     messages: await convertToModelMessages(messages),
     stopWhen: isStepCount(5),
     tools: {
@@ -197,7 +199,7 @@ export async function POST(req: Request) {
       listJobs: tool({
         description: "List job applications",
         inputSchema: z.object({ query: z.string().optional() }),
-        execute: async ({ query }) => listJobs(userId, { query }),
+        execute: async ({ query }) => listJobs(userId, { query, status: "all" }),
       }),
       createJob: tool({
         description: "Create a job application",
@@ -274,6 +276,27 @@ export async function POST(req: Request) {
           label: z.string(),
         }),
         execute: async (input) => input,
+      }),
+      proposeMove: tool({
+        description:
+          "Propose moving a note to another subject. Does not move. The UI will ask the user to confirm.",
+        inputSchema: z.object({
+          noteId: z.string().uuid(),
+          subjectId: z.string().uuid(),
+        }),
+        execute: async ({ noteId, subjectId }) => {
+          const note = await getNote(userId, noteId);
+          const subject = await getSubject(userId, subjectId);
+          if (!note || !subject) {
+            return { error: "Note or subject not found" };
+          }
+          return {
+            noteId,
+            subjectId,
+            noteLabel: note.title,
+            subjectName: subject.name,
+          };
+        },
       }),
       playAmbient: tool({
         description: "Play or pause an ambient sound on the Focus mixer",

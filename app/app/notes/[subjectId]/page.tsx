@@ -2,14 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { BulkMove } from "@/components/notes/bulk-move";
 import { MoveNoteForm } from "@/components/notes/move-note-form";
 import { PendingSubmit } from "@/components/notes/pending-submit";
+import { PinForm } from "@/components/pin-form";
 import { QuickDump } from "@/components/notes/quick-dump";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createNoteAction, deleteNoteAction } from "@/lib/actions/notes";
+import {
+  archiveNoteAction,
+  createNoteAction,
+  deleteNoteAction,
+  pinNoteAction,
+} from "@/lib/actions/notes";
 import { updateSubjectAction } from "@/lib/actions/subjects";
 import { listNotes } from "@/lib/db/queries/notes";
 import { getSubject, listSubjects } from "@/lib/db/queries/subjects";
@@ -25,18 +33,24 @@ export default async function SubjectPage({
   searchParams,
 }: {
   params: Promise<{ subjectId: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; archived?: string }>;
 }) {
   const userId = await requireUserId();
   const { subjectId } = await params;
-  const { q = "" } = await searchParams;
+  const { q = "", archived: archivedParam } = await searchParams;
+  const archived = archivedParam === "1";
   if (!isUuid(subjectId)) notFound();
   const [subject, notes, subjects] = await Promise.all([
     withDb<Subject | null>(null, () => getSubject(userId, subjectId)),
-    withDb<Note[]>([], () => listNotes(userId, subjectId, q)),
+    withDb<Note[]>([], () => listNotes(userId, subjectId, q, archived)),
     withDb<Subject[]>([], () => listSubjects(userId)),
   ]);
   if (!subject) notFound();
+  const showBulk =
+    isInboxName(subject.name) &&
+    !archived &&
+    notes.length >= 2 &&
+    subjects.length >= 2;
 
   return (
     <div className="space-y-8">
@@ -44,19 +58,43 @@ export default async function SubjectPage({
         <Link href="/app/notes" className="text-sm underline">
           All subjects
         </Link>
-        <h1 className="mt-2 text-3xl font-semibold">{subject.name}</h1>
-        <p className="text-muted-foreground">
-          {isInboxName(subject.name)
-            ? "Unsorted dumps. Move them when you feel like it."
-            : subject.description || "No description yet."}
-        </p>
+        <div className="mt-2">
+          <PageHeader
+            title={subject.name}
+            description={
+              isInboxName(subject.name)
+                ? "Unsorted dumps. Move them when you feel like it."
+                : subject.description || "No description yet."
+            }
+          />
+        </div>
       </div>
-      <QuickDump subjectId={subjectId} autoFocus={!q && notes.length === 0} />
-      <form className="max-w-sm">
-        <Input name="q" placeholder="Search notes" defaultValue={q} />
-      </form>
+      {archived ? null : (
+        <QuickDump subjectId={subjectId} autoFocus={!q && notes.length === 0} />
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <form className="max-w-sm">
+          <Input name="q" placeholder="Search notes" defaultValue={q} />
+          {archived ? <input type="hidden" name="archived" value="1" /> : null}
+        </form>
+        <Link
+          href={archived ? `/app/notes/${subjectId}` : `/app/notes/${subjectId}?archived=1`}
+          className="text-sm text-muted-foreground underline"
+        >
+          {archived ? "Active notes" : "Archived"}
+        </Link>
+      </div>
+      {showBulk ? (
+        <BulkMove notes={notes} subjects={subjects} currentSubjectId={subjectId} />
+      ) : null}
       {notes.length === 0 ? (
-        <p className="text-muted-foreground">Nothing here yet. Dump above.</p>
+        <p className="text-muted-foreground">
+          {q.trim()
+            ? "No notes match."
+            : archived
+              ? "Nothing archived."
+              : "Nothing here yet. Dump above."}
+        </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {notes.map((note) => {
@@ -81,51 +119,63 @@ export default async function SubjectPage({
                   ) : (
                     <p className="text-muted-foreground italic">Empty</p>
                   )}
-                  <MoveNoteForm
-                    noteId={note.id}
-                    currentSubjectId={subjectId}
-                    subjects={subjects}
-                    compact
-                  />
-                  <ConfirmDelete
-                    label={note.title}
-                    action={deleteNoteAction.bind(null, note.id)}
-                  />
+                  {showBulk || archived ? null : (
+                    <MoveNoteForm
+                      noteId={note.id}
+                      currentSubjectId={subjectId}
+                      subjects={subjects}
+                      compact
+                    />
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <PinForm
+                      pinned={Boolean(note.pinnedAt)}
+                      action={pinNoteAction.bind(null, note.id)}
+                    />
+                    <form action={archiveNoteAction.bind(null, note.id)}>
+                      <PendingSubmit
+                        label={archived ? "Unarchive" : "Done"}
+                        pendingLabel="Saving…"
+                        variant="outline"
+                        size="xs"
+                      />
+                    </form>
+                    <ConfirmDelete
+                      label={note.title}
+                      action={deleteNoteAction.bind(null, note.id)}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
-      <Card className="max-w-lg">
-        <CardHeader>
-          <CardTitle>New note</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={createNoteAction.bind(null, subjectId)} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="title">
-                Title <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Input id="title" name="title" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="description">
-                Description{" "}
-                <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Input id="description" name="description" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="tags">
-                Tags <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Input id="tags" name="tags" />
-            </div>
-            <PendingSubmit label="Create" pendingLabel="Creating…" />
-          </form>
-        </CardContent>
-      </Card>
+      <details className="max-w-lg rounded-xl border border-border bg-card p-4">
+        <summary className="cursor-pointer text-sm font-medium">New note</summary>
+        <form action={createNoteAction.bind(null, subjectId)} className="mt-4 space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="title">
+              Title <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input id="title" name="title" />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="description">
+              Description{" "}
+              <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input id="description" name="description" />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="tags">
+              Tags <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input id="tags" name="tags" />
+          </div>
+          <PendingSubmit label="Create" pendingLabel="Creating…" />
+        </form>
+      </details>
       <details className="max-w-lg rounded-xl border border-border bg-card p-4">
         <summary className="cursor-pointer text-sm font-medium">
           Edit subject

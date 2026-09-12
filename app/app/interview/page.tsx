@@ -2,12 +2,18 @@ import Link from "next/link";
 
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { ErrorSheetForm } from "@/components/interview/error-sheet-form";
+import { PageHeader } from "@/components/page-header";
+import { PinForm } from "@/components/pin-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createErrorSheetAction, deleteErrorSheetAction } from "@/lib/actions/error-sheets";
+import {
+  createErrorSheetAction,
+  deleteErrorSheetAction,
+  pinErrorSheetAction,
+} from "@/lib/actions/error-sheets";
 import {
   listErrorSheets,
   type BeforeInterviewFilter,
@@ -15,6 +21,7 @@ import {
 } from "@/lib/db/queries/error-sheets";
 import { withDb } from "@/lib/db/safe";
 import { requireUserId } from "@/lib/session";
+import { SELECT_CLASS } from "@/lib/utils";
 
 const LOOKUPS: Array<{ value: BeforeInterviewFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -30,9 +37,6 @@ const PRIORITIES: Array<{ value: PriorityFilter; label: string }> = [
   { value: "low", label: "Low" },
 ];
 
-const SELECT_CLASS =
-  "h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
-
 function preview(text: string, max = 120) {
   const trimmed = text.replace(/\s+/g, " ").trim();
   if (!trimmed) return "";
@@ -43,6 +47,16 @@ function priorityClass(priority: "high" | "medium" | "low") {
   if (priority === "high") return "border-transparent bg-theme-ferrari-red/15 text-theme-ferrari-red";
   if (priority === "medium") return "border-transparent bg-theme-orange/20 text-theme-orange";
   return "";
+}
+
+function NewSheetForm() {
+  return (
+    <ErrorSheetForm
+      action={createErrorSheetAction}
+      submitLabel="Create"
+      collapseExtras
+    />
+  );
 }
 
 export default async function InterviewPage({
@@ -67,13 +81,11 @@ export default async function InterviewPage({
   );
   const filtered =
     Boolean(q.trim()) || lookupFilter !== "all" || priorityFilter !== "all";
+  const emptyUnfiltered = sheets.length === 0 && !filtered;
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold">Interview</h1>
-        <p className="mt-1 text-muted-foreground">Error sheets for revision.</p>
-      </div>
+      <PageHeader title="Interview" description="Error sheets for revision." />
       <form className="flex flex-wrap items-end gap-2">
         <div className="space-y-1">
           <Label htmlFor="q">Search</Label>
@@ -132,6 +144,9 @@ export default async function InterviewPage({
             return (
               <Card key={sheet.id}>
                 <CardHeader>
+                  {mistakePreview ? (
+                    <CardDescription>{mistakePreview}</CardDescription>
+                  ) : null}
                   <CardTitle>
                     <Link
                       href={`/app/interview/${sheet.id}`}
@@ -142,19 +157,20 @@ export default async function InterviewPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  {mistakePreview ? (
-                    <p className="text-muted-foreground">{mistakePreview}</p>
-                  ) : null}
                   <div className="flex flex-wrap gap-1">
                     <Badge
                       variant="secondary"
-                      className={priorityClass(sheet.revisionPriority)}
+                      className={`h-4 px-1.5 text-[10px] ${priorityClass(sheet.revisionPriority)}`}
                     >
                       {sheet.revisionPriority}
                     </Badge>
-                    <Badge variant="outline">{sheet.beforeInterviewLookup}</Badge>
+                    <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
+                      {sheet.beforeInterviewLookup}
+                    </Badge>
                     {sheet.isMistakeCorrected ? (
-                      <Badge variant="outline">Corrected</Badge>
+                      <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
+                        Corrected
+                      </Badge>
                     ) : null}
                   </div>
                   {sheet.tags.length > 0 ? (
@@ -170,28 +186,39 @@ export default async function InterviewPage({
                       Open problem
                     </a>
                   ) : null}
-                  <ConfirmDelete
-                    label={sheet.probName}
-                    action={deleteErrorSheetAction.bind(null, sheet.id)}
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    <PinForm
+                      pinned={Boolean(sheet.pinnedAt)}
+                      action={pinErrorSheetAction.bind(null, sheet.id)}
+                    />
+                    <ConfirmDelete
+                      label={sheet.probName}
+                      action={deleteErrorSheetAction.bind(null, sheet.id)}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
-      <Card className="max-w-lg">
-        <CardHeader>
-          <CardTitle>New sheet</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ErrorSheetForm
-            action={createErrorSheetAction}
-            submitLabel="Create"
-            collapseExtras
-          />
-        </CardContent>
-      </Card>
+      {emptyUnfiltered ? (
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle>New sheet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NewSheetForm />
+          </CardContent>
+        </Card>
+      ) : (
+        <details className="max-w-lg rounded-xl border border-border bg-card p-4">
+          <summary className="cursor-pointer text-sm font-medium">New sheet</summary>
+          <div className="mt-4">
+            <NewSheetForm />
+          </div>
+        </details>
+      )}
     </div>
   );
 }

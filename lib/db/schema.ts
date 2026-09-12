@@ -135,6 +135,8 @@ export const notes = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'`),
+    archivedAt: timestamp("archived_at", { mode: "date" }),
+    pinnedAt: timestamp("pinned_at", { mode: "date" }),
     ...timestamps,
   },
   (t) => [
@@ -165,6 +167,7 @@ export const errorSheets = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'`),
+    pinnedAt: timestamp("pinned_at", { mode: "date" }),
     ...timestamps,
   },
   (t) => [index("error_sheets_user_id_idx").on(t.userId)],
@@ -182,6 +185,7 @@ export const jobApplications = pgTable(
     dateApplied: timestamp("date_applied", { mode: "date" }).notNull(),
     status: jobStatusEnum("status").notNull(),
     campus: campusEnum("campus").notNull().default("oncampus"),
+    pinnedAt: timestamp("pinned_at", { mode: "date" }),
     ...timestamps,
   },
   (t) => [index("job_applications_user_id_idx").on(t.userId)],

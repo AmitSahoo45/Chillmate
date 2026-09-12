@@ -13,6 +13,7 @@ import {
   Timer,
 } from "lucide-react";
 
+import { QuickDump } from "@/components/notes/quick-dump";
 import { CopilotPanel } from "@/components/workspace/copilot-panel";
 import { APP_NAV } from "@/components/workspace/nav";
 import { useWorkspaceState } from "@/components/workspace/workspace-state";
@@ -37,19 +38,32 @@ type User = {
   image?: string | null;
 };
 
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
 export function WorkspaceShell({
   user,
   geminiReady,
   initialMessages,
+  dumpSubjects,
   children,
 }: {
   user: User;
   geminiReady: boolean;
   initialMessages: CopilotMessage[];
+  dumpSubjects: Array<{ id: string; name: string }>;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { copilotOpen, setCopilotOpen } = useWorkspaceState();
+  const {
+    copilotOpen,
+    setCopilotOpen,
+    dumpOpen,
+    setDumpOpen,
+    remaining,
+    isPaused,
+  } = useWorkspaceState();
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -57,16 +71,35 @@ export function WorkspaceShell({
         event.preventDefault();
         setCopilotOpen(!copilotOpen);
       }
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        (event.key.toLowerCase() === "n" ||
+          (event.shiftKey && event.key.toLowerCase() === "d"))
+      ) {
+        event.preventDefault();
+        setDumpOpen(!dumpOpen);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [copilotOpen, setCopilotOpen]);
+  }, [copilotOpen, dumpOpen, setCopilotOpen, setDumpOpen]);
+
+  useEffect(() => {
+    const base = "Chillmate";
+    if (isPaused) {
+      document.title = base;
+      return;
+    }
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    document.title = `${pad(minutes)}:${pad(seconds)} · ${base}`;
+  }, [isPaused, remaining]);
 
   return (
-    <div className="flex min-h-svh bg-theme-ecru-white text-theme-forest-green">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card md:flex">
+    <div className="flex min-h-svh bg-background text-foreground">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <Brand />
-        <Nav pathname={pathname} />
+        <Nav pathname={pathname} remaining={remaining} isPaused={isPaused} />
         <UserFooter user={user} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -79,22 +112,26 @@ export function WorkspaceShell({
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <Brand />
-              <Nav pathname={pathname} />
+              <Nav pathname={pathname} remaining={remaining} isPaused={isPaused} />
               <UserFooter user={user} />
             </SheetContent>
           </Sheet>
           <span className="font-semibold">Chillmate</span>
+          <Button variant="accent" size="sm" onClick={() => setDumpOpen(true)}>
+            Dump
+          </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
             onClick={() => setCopilotOpen(true)}
+            aria-label="Open copilot"
           >
             <PanelRight className="size-4" />
           </Button>
         </header>
         <div className="flex min-h-0 flex-1">
           <main className="min-w-0 flex-1 overflow-auto p-4 md:p-8">
-            {children}
+            <div className="mx-auto w-full max-w-4xl">{children}</div>
           </main>
           <CopilotPanel
             open={copilotOpen}
@@ -103,7 +140,7 @@ export function WorkspaceShell({
             initialMessages={initialMessages}
           />
         </div>
-        <nav className="grid grid-cols-5 border-t border-border bg-card md:hidden">
+        <nav className="grid grid-cols-5 border-t border-sidebar-border bg-sidebar md:hidden">
           {APP_NAV.map((item) => {
             const Icon = ICONS[item.label];
             const active =
@@ -126,14 +163,25 @@ export function WorkspaceShell({
           })}
         </nav>
       </div>
-      <button
-        type="button"
-        className="fixed right-4 bottom-20 z-30 hidden size-10 items-center justify-center rounded-full bg-theme-orange text-theme-forest-green shadow md:flex"
-        onClick={() => setCopilotOpen(!copilotOpen)}
-        aria-label="Toggle copilot"
-      >
-        <PanelRight className="size-4" />
-      </button>
+      <div className="fixed right-4 bottom-20 z-30 hidden md:block">
+        <Button
+          type="button"
+          variant="accent"
+          size="icon"
+          className="rounded-full shadow"
+          onClick={() => setCopilotOpen(!copilotOpen)}
+          aria-label="Toggle copilot"
+          aria-pressed={copilotOpen}
+        >
+          <PanelRight className="size-4" />
+        </Button>
+      </div>
+      <Sheet open={dumpOpen} onOpenChange={setDumpOpen}>
+        <SheetContent side="right" className="w-full overflow-auto p-4 sm:max-w-md">
+          <p className="mb-3 text-sm font-semibold">Dump · Ctrl+N</p>
+          <QuickDump compact subjects={dumpSubjects} autoFocus={dumpOpen} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -153,7 +201,16 @@ function Brand() {
   );
 }
 
-function Nav({ pathname }: { pathname: string }) {
+function Nav({
+  pathname,
+  remaining,
+  isPaused,
+}: {
+  pathname: string;
+  remaining: number;
+  isPaused: boolean;
+}) {
+  const { setDumpOpen } = useWorkspaceState();
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       {APP_NAV.map((item) => {
@@ -162,6 +219,10 @@ function Nav({ pathname }: { pathname: string }) {
           item.href === "/app"
             ? pathname === "/app"
             : pathname.startsWith(item.href);
+        const focusTime =
+          item.href === "/app/focus" && !isPaused
+            ? ` ${pad(Math.floor(remaining / 60))}:${pad(remaining % 60)}`
+            : "";
         return (
           <Link
             key={item.href}
@@ -169,15 +230,25 @@ function Nav({ pathname }: { pathname: string }) {
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
               active
-                ? "bg-theme-forest-green text-theme-ecru-white"
-                : "hover:bg-muted",
+                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                : "hover:bg-sidebar-accent",
             )}
           >
             <Icon className="size-4" />
             {item.label}
+            {focusTime}
           </Link>
         );
       })}
+      <Button
+        type="button"
+        variant="accent"
+        size="sm"
+        className="mt-2 justify-start"
+        onClick={() => setDumpOpen(true)}
+      >
+        Dump
+      </Button>
     </nav>
   );
 }

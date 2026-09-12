@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { PendingSubmit } from "@/components/notes/pending-submit";
 import { QuickDump } from "@/components/notes/quick-dump";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,10 +40,7 @@ export default async function NotesPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold">Notes</h1>
-        <p className="mt-1 text-muted-foreground">Subjects you write in.</p>
-      </div>
+      <PageHeader title="Notes" description="Subjects you write in." />
       <QuickDump
         subjects={dumpSubjects}
         autoFocus={!q && ordered.length === 0}
@@ -128,32 +126,28 @@ export default async function NotesPage({
           </div>
         )}
       </div>
-      <Card className="max-w-lg">
-        <CardHeader>
-          <CardTitle>New subject</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={createSubjectAction} className="space-y-3">
-            <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" required placeholder="OS, interviews…" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="description">
-                Description <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Textarea id="description" name="description" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="tags">
-                Tags <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Input id="tags" name="tags" placeholder="dsa, os" />
-            </div>
-            <PendingSubmit label="Create" pendingLabel="Creating…" />
-          </form>
-        </CardContent>
-      </Card>
+      <details className="max-w-lg rounded-xl border border-border bg-card p-4">
+        <summary className="cursor-pointer text-sm font-medium">New subject</summary>
+        <form action={createSubjectAction} className="mt-4 space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" required placeholder="OS, interviews…" />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="description">
+              Description <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Textarea id="description" name="description" />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="tags">
+              Tags <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input id="tags" name="tags" placeholder="dsa, os" />
+          </div>
+          <PendingSubmit label="Create" pendingLabel="Creating…" />
+        </form>
+      </details>
     </div>
   );
 }

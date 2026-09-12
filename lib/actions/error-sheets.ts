@@ -7,6 +7,7 @@ import {
   createErrorSheet,
   deleteErrorSheet,
   getErrorSheet,
+  setErrorSheetPinned,
   updateErrorSheet,
 } from "@/lib/db/queries/error-sheets";
 import { requireUserId } from "@/lib/session";
@@ -68,6 +69,16 @@ export async function updateErrorSheetAction(id: string, formData: FormData) {
   await updateErrorSheet(userId, id, data);
   revalidatePath("/app/interview");
   revalidatePath(`/app/interview/${id}`);
+}
+
+export async function pinErrorSheetAction(id: string) {
+  const userId = await requireUserId();
+  if (!isUuid(id)) redirect("/app/interview");
+  const existing = await getErrorSheet(userId, id);
+  if (!existing) redirect("/app/interview");
+  await setErrorSheetPinned(userId, id, !existing.pinnedAt);
+  revalidatePath("/app");
+  revalidatePath("/app/interview");
 }
 
 export async function deleteErrorSheetAction(id: string) {

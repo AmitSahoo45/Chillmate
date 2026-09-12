@@ -1,7 +1,8 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { jobApplications } from "@/lib/db/schema";
+import { PIN_LIMIT } from "@/lib/pins";
 import { matchesQuery } from "@/lib/tags";
 
 export type JobStatus =
@@ -14,9 +15,11 @@ export type JobStatus =
 
 export type Campus = "oncampus" | "offcampus";
 
+export type JobStatusFilter = JobStatus | "all" | "open";
+
 export async function listJobs(
   userId: string,
-  opts: { query?: string; status?: JobStatus | "all" } = {},
+  opts: { query?: string; status?: JobStatusFilter } = {},
 ) {
   const rows = await db
     .select()
@@ -24,13 +27,28 @@ export async function listJobs(
     .where(eq(jobApplications.userId, userId))
     .orderBy(desc(jobApplications.updatedAt));
 
-  const status = opts.status ?? "all";
+  const status = opts.status ?? "open";
   const query = opts.query ?? "";
 
   return rows.filter((row) => {
-    if (status !== "all" && row.status !== status) return false;
+    if (status === "open") {
+      if (row.status === "rejected") return false;
+    } else if (status !== "all" && row.status !== status) {
+      return false;
+    }
     return matchesQuery(query, [row.company, row.position]);
   });
+}
+
+export async function listPinnedJobs(userId: string) {
+  return db
+    .select()
+    .from(jobApplications)
+    .where(
+      and(eq(jobApplications.userId, userId), isNotNull(jobApplications.pinnedAt)),
+    )
+    .orderBy(desc(jobApplications.pinnedAt))
+    .limit(PIN_LIMIT);
 }
 
 export async function listFollowUpJobs(userId: string, limit = 5) {
@@ -86,6 +104,7 @@ export async function updateJob(
     dateApplied?: Date;
     status?: JobStatus;
     campus?: Campus;
+    pinnedAt?: Date | null;
   },
 ) {
   const [row] = await db
@@ -102,6 +121,44 @@ export async function updateJobStatus(
   status: JobStatus,
 ) {
   return updateJob(userId, id, { status });
+}
+
+export async function nudgeJob(userId: string, id: string) {
+  const existing = await getJob(userId, id);
+  if (!existing) return null;
+  const status: JobStatus =
+    existing.status === "wishlist" ? "applied" : existing.status;
+  return updateJob(userId, id, { dateApplied: new Date(), status });
+}
+
+export async function setJobPinned(userId: string, id: string, pinned: boolean) {
+  const existing = await getJob(userId, id);
+  if (!existing) return null;
+  if (!pinned) {
+    return updateJob(userId, id, { pinnedAt: null });
+  }
+  if (existing.pinnedAt) return existing;
+  const pinnedRows = await db
+    .select({ id: jobApplications.id })
+    .from(jobApplications)
+    .where(
+      and(eq(jobApplications.userId, userId), isNotNull(jobApplications.pinnedAt)),
+    )
+    .orderBy(asc(jobApplications.pinnedAt));
+  if (pinnedRows.length >= PIN_LIMIT) {
+    await db
+      .update(jobApplications)
+      .set({ pinnedAt: null })
+      .where(
+        and(eq(jobApplications.id, pinnedRows[0].id), eq(jobApplications.userId, userId)),
+      );
+  }
+  const [row] = await db
+    .update(jobApplications)
+    .set({ pinnedAt: new Date() })
+    .where(and(eq(jobApplications.id, id), eq(jobApplications.userId, userId)))
+    .returning();
+  return row ?? null;
 }
 
 export async function deleteJob(userId: string, id: string) {

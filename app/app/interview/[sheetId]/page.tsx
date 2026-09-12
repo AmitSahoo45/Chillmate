@@ -39,7 +39,7 @@ export default async function SheetPage({
           </a>
         ) : null}
       </div>
-      <h1 className="text-3xl font-semibold">{sheet.probName}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{sheet.probName}</h1>
       <ErrorSheetForm
         action={updateErrorSheetAction.bind(null, sheet.id)}
         defaults={sheet}

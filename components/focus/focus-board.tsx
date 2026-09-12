@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 
+import { ConfirmDelete } from "@/components/confirm-delete";
+import { TooBig } from "@/components/focus/too-big";
 import { PendingSubmit } from "@/components/notes/pending-submit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,9 @@ import {
   deleteTaskAction,
   toggleTaskAction,
 } from "@/lib/actions/tasks";
+import { SOUND_PRESETS } from "@/lib/focus/presets";
 import { AMBIENT_TRACKS } from "@/lib/focus/tracks";
+import { cn } from "@/lib/utils";
 import type { Task } from "@/lib/db/schema";
 
 function pad(value: number) {
@@ -37,6 +41,10 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
     tracks,
     toggleTrack,
     setTrackVolume,
+    applyPreset,
+    visualTick,
+    setVisualTick,
+    minutePulse,
   } = useWorkspaceState();
 
   const minutes = Math.floor(remaining / 60);
@@ -71,7 +79,10 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
           </Button>
         </div>
         <div
-          className="mx-auto flex size-56 items-center justify-center rounded-full border-8 border-theme-forest-green"
+          className={cn(
+            "mx-auto flex size-56 items-center justify-center rounded-full border-8 border-theme-forest-green transition-transform",
+            visualTick && minutePulse ? "scale-105" : "",
+          )}
           style={{
             background: `conic-gradient(var(--theme-orange) ${pct}%, transparent 0)`,
           }}
@@ -85,34 +96,45 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
             {isPaused ? "Start" : "Pause"}
           </Button>
         </div>
-        <form
-          className="grid grid-cols-3 gap-2 text-sm"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const data = new FormData(event.currentTarget);
-            applyDurations({
-              pomodoro: minutesField(data.get("pomodoro"), durations.pomodoro) * 60,
-              short: minutesField(data.get("short"), durations.short) * 60,
-              long: minutesField(data.get("long"), durations.long) * 60,
-            });
-          }}
-        >
-          <label>
-            Focus
-            <Input name="pomodoro" type="number" min={1} defaultValue={durations.pomodoro / 60} />
+        <details className="rounded-xl border border-border bg-card p-4">
+          <summary className="cursor-pointer text-sm font-medium">Timer settings</summary>
+          <form
+            className="mt-4 grid grid-cols-3 gap-2 text-sm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              applyDurations({
+                pomodoro: minutesField(data.get("pomodoro"), durations.pomodoro) * 60,
+                short: minutesField(data.get("short"), durations.short) * 60,
+                long: minutesField(data.get("long"), durations.long) * 60,
+              });
+            }}
+          >
+            <label>
+              Focus
+              <Input name="pomodoro" type="number" min={1} defaultValue={durations.pomodoro / 60} />
+            </label>
+            <label>
+              Short
+              <Input name="short" type="number" min={1} defaultValue={durations.short / 60} />
+            </label>
+            <label>
+              Long
+              <Input name="long" type="number" min={1} defaultValue={durations.long / 60} />
+            </label>
+            <Button type="submit" variant="outline" className="col-span-3">
+              Apply times
+            </Button>
+          </form>
+          <label className="mt-3 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={visualTick}
+              onChange={(event) => setVisualTick(event.currentTarget.checked)}
+            />
+            Minute pulse (no extra sound)
           </label>
-          <label>
-            Short
-            <Input name="short" type="number" min={1} defaultValue={durations.short / 60} />
-          </label>
-          <label>
-            Long
-            <Input name="long" type="number" min={1} defaultValue={durations.long / 60} />
-          </label>
-          <Button type="submit" variant="outline" className="col-span-3">
-            Apply times
-          </Button>
-        </form>
+        </details>
       </section>
       <section className="space-y-6">
         <div>
@@ -123,29 +145,42 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
           </form>
           <ul className="mt-3 space-y-2">
             {tasks.map((task) => (
-              <li key={task.id} className="flex items-center gap-2 text-sm">
+              <li key={task.id} className="flex flex-wrap items-center gap-2 text-sm">
                 <form action={toggleTaskAction.bind(null, task.id)}>
-                  <Button type="submit" size="xs" variant="outline">
+                  <Button type="submit" size="xs">
                     {task.completed ? "Undo" : "Done"}
                   </Button>
                 </form>
                 <span className={task.completed ? "text-muted-foreground line-through" : ""}>
                   {task.text}
                 </span>
-                <form action={deleteTaskAction.bind(null, task.id)}>
-                  <Button type="submit" size="xs" variant="destructive">
-                    Delete
-                  </Button>
-                </form>
+                {task.completed ? null : <TooBig id={task.id} text={task.text} />}
+                <ConfirmDelete
+                  label={task.text}
+                  action={deleteTaskAction.bind(null, task.id)}
+                />
               </li>
             ))}
           </ul>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold">Ambient</h2>
-          <p className="text-sm text-muted-foreground">
-            Add mp3s to public/audio/ to enable mixers.
+        <details className="rounded-xl border border-border bg-card p-4">
+          <summary className="cursor-pointer text-sm font-medium">Ambient</summary>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Add mp3s to public/audio/ to enable mixers. Last mix is remembered.
           </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {SOUND_PRESETS.map((preset) => (
+              <Button
+                key={preset.id}
+                type="button"
+                size="xs"
+                variant="outline"
+                onClick={() => applyPreset(preset.id)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {AMBIENT_TRACKS.map((track) => {
               const state = tracks[track.id];
@@ -183,7 +218,7 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
               );
             })}
           </div>
-        </div>
+        </details>
       </section>
     </div>
   );

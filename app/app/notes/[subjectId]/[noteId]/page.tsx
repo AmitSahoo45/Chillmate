@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 
 import { MoveNoteForm } from "@/components/notes/move-note-form";
 import { NoteEditor } from "@/components/notes/note-editor";
-import { updateNoteAction } from "@/lib/actions/notes";
+import { PendingSubmit } from "@/components/notes/pending-submit";
+import { PinForm } from "@/components/pin-form";
+import {
+  archiveNoteAction,
+  pinNoteAction,
+  updateNoteAction,
+} from "@/lib/actions/notes";
 import { getNote } from "@/lib/db/queries/notes";
 import { getSubject, listSubjects } from "@/lib/db/queries/subjects";
 import type { Note, Subject } from "@/lib/db/schema";
@@ -32,13 +38,26 @@ export default async function NotePage({
         <Link href={`/app/notes/${subjectId}`} className="text-sm underline">
           Back to {subject.name}
         </Link>
-        <MoveNoteForm
-          noteId={note.id}
-          currentSubjectId={subjectId}
-          subjects={subjects}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <MoveNoteForm
+            noteId={note.id}
+            currentSubjectId={subjectId}
+            subjects={subjects}
+          />
+          <PinForm
+            pinned={Boolean(note.pinnedAt)}
+            action={pinNoteAction.bind(null, note.id)}
+          />
+          <form action={archiveNoteAction.bind(null, note.id)}>
+            <PendingSubmit
+              label={note.archivedAt ? "Unarchive" : "Done"}
+              pendingLabel="Saving…"
+              variant="outline"
+              size="xs"
+            />
+          </form>
+        </div>
       </div>
-      <h1 className="text-3xl font-semibold">{note.title}</h1>
       <NoteEditor
         action={updateNoteAction.bind(null, note.id)}
         defaults={note}

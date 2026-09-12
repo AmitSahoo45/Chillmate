@@ -1,7 +1,8 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { errorSheets } from "@/lib/db/schema";
+import { PIN_LIMIT } from "@/lib/pins";
 import { matchesQuery } from "@/lib/tags";
 
 export type BeforeInterviewFilter = "all" | "yes" | "no" | "maybe";
@@ -51,6 +52,15 @@ export async function listErrorSheets(
       if (rank !== 0) return rank;
       return b.updatedAt.getTime() - a.updatedAt.getTime();
     });
+}
+
+export async function listPinnedErrorSheets(userId: string) {
+  return db
+    .select()
+    .from(errorSheets)
+    .where(and(eq(errorSheets.userId, userId), isNotNull(errorSheets.pinnedAt)))
+    .orderBy(desc(errorSheets.pinnedAt))
+    .limit(PIN_LIMIT);
 }
 
 export async function getErrorSheet(userId: string, id: string) {
@@ -109,6 +119,43 @@ export async function updateErrorSheet(
   const [row] = await db
     .update(errorSheets)
     .set(data)
+    .where(and(eq(errorSheets.id, id), eq(errorSheets.userId, userId)))
+    .returning();
+  return row ?? null;
+}
+
+export async function setErrorSheetPinned(
+  userId: string,
+  id: string,
+  pinned: boolean,
+) {
+  const existing = await getErrorSheet(userId, id);
+  if (!existing) return null;
+  if (!pinned) {
+    const [row] = await db
+      .update(errorSheets)
+      .set({ pinnedAt: null })
+      .where(and(eq(errorSheets.id, id), eq(errorSheets.userId, userId)))
+      .returning();
+    return row ?? null;
+  }
+  if (existing.pinnedAt) return existing;
+  const pinnedRows = await db
+    .select({ id: errorSheets.id })
+    .from(errorSheets)
+    .where(and(eq(errorSheets.userId, userId), isNotNull(errorSheets.pinnedAt)))
+    .orderBy(asc(errorSheets.pinnedAt));
+  if (pinnedRows.length >= PIN_LIMIT) {
+    await db
+      .update(errorSheets)
+      .set({ pinnedAt: null })
+      .where(
+        and(eq(errorSheets.id, pinnedRows[0].id), eq(errorSheets.userId, userId)),
+      );
+  }
+  const [row] = await db
+    .update(errorSheets)
+    .set({ pinnedAt: new Date() })
     .where(and(eq(errorSheets.id, id), eq(errorSheets.userId, userId)))
     .returning();
   return row ?? null;

@@ -24,16 +24,16 @@ const TEMPLATES: Array<{ label: string; body: string }> = [
     body: "# Brain dump\n\n- \n- \n- \n\n## Worth keeping\n\n",
   },
   {
-    label: "Meeting",
-    body: "# Meeting\n\n**Date:** \n**People:** \n\n## Notes\n\n- \n\n## Actions\n\n- [ ] \n",
+    label: "Interview",
+    body: "# Interview postmortem\n\n**Role:** \n**Went well:** \n**Went wrong:** \n**Fix next time:** \n",
   },
   {
-    label: "Summary",
-    body: "# Summary\n\n**One-line takeaway:** \n\n## Key ideas\n\n- \n\n## Quotes\n\n> \n",
+    label: "Job follow-up",
+    body: "# Job follow-up\n\n**Company:** \n**Last touch:** \n**Next:** \n",
   },
   {
-    label: "Checklist",
-    body: "# Checklist\n\n- [ ] \n- [ ] \n- [ ] \n",
+    label: "On my mind",
+    body: "# What's on my mind\n\n- \n",
   },
 ];
 
@@ -291,7 +291,7 @@ export function NoteEditor({
         <Button type="button" size="sm" variant="outline" onClick={toggleZen}>
           {zen ? "Exit zen" : "Zen mode"}
         </Button>
-        <WriteSprint />
+        <WriteSprint ownerKey={ownerKey} />
         <span className="text-muted-foreground" aria-live="polite">
           {words} word{words === 1 ? "" : "s"}
           {words >= goal ? " — goal reached" : ""}
@@ -323,61 +323,20 @@ export function NoteEditor({
       ) : null}
 
       <div className={zen ? "mx-auto w-full max-w-2xl space-y-4" : "space-y-4"}>
-        <div className="space-y-1">
-          <Label htmlFor="title">
-            Title <span className="text-muted-foreground">(optional)</span>
-          </Label>
-          <Input
-            id="title"
-            name="title"
-            value={title}
-            placeholder="Name it later"
-            onChange={(event) => setTitle(event.currentTarget.value)}
-          />
-        </div>
+        <Input
+          id="title"
+          name="title"
+          value={title}
+          aria-label="Title"
+          placeholder="Title (optional)"
+          onChange={(event) => setTitle(event.currentTarget.value)}
+        />
         {zen ? (
           <>
             <input type="hidden" name="description" value={description} />
             <input type="hidden" name="tags" value={tags} />
           </>
-        ) : (
-          <>
-            <div className="space-y-1">
-              <Label htmlFor="description">
-                Description <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Input
-                id="description"
-                name="description"
-                value={description}
-                onChange={(event) => setDescription(event.currentTarget.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={tags}
-                onChange={(event) => setTags(event.currentTarget.value)}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Start from:</span>
-              {TEMPLATES.map((template) => (
-                <Button
-                  key={template.label}
-                  type="button"
-                  size="xs"
-                  variant="outline"
-                  onClick={() => insertTemplate(template.body)}
-                >
-                  {template.label}
-                </Button>
-              ))}
-            </div>
-          </>
-        )}
+        ) : null}
       </div>
 
       <div className={zen ? "mx-auto w-full max-w-2xl" : "grid gap-4 lg:grid-cols-2"}>
@@ -412,6 +371,47 @@ export function NoteEditor({
               : ""}
         </span>
       </div>
+      {zen ? null : (
+        <details className="rounded-xl border border-border bg-card p-4">
+          <summary className="cursor-pointer text-sm font-medium">Details</summary>
+          <div className="mt-4 space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="description">
+                Description <span className="text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="description"
+                name="description"
+                value={description}
+                onChange={(event) => setDescription(event.currentTarget.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="tags">Tags (comma-separated)</Label>
+              <Input
+                id="tags"
+                name="tags"
+                value={tags}
+                onChange={(event) => setTags(event.currentTarget.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Start from:</span>
+              {TEMPLATES.map((template) => (
+                <Button
+                  key={template.label}
+                  type="button"
+                  size="xs"
+                  variant="outline"
+                  onClick={() => insertTemplate(template.body)}
+                >
+                  {template.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </details>
+      )}
     </form>
   );
 }
