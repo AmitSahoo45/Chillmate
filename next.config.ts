@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
   // generating Chillmate/AGENTS.md + CLAUDE.md on every run.
   agentRules: false,
   images: {
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
     remotePatterns: [
       {
         protocol: "https",

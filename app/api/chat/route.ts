@@ -40,6 +40,7 @@ import {
 import { createTask, listTasks, toggleTask } from "@/lib/db/queries/tasks";
 import { tryParseDateOnly } from "@/lib/date";
 import { isGeminiConfigured } from "@/lib/env";
+import { AMBIENT_TRACK_IDS } from "@/lib/focus/tracks";
 import {
   CHAT_BODY_MAX,
   CHAT_MAX_OUTPUT_TOKENS,
@@ -354,16 +355,7 @@ export async function POST(req: Request) {
       playAmbient: tool({
         description: "Play or pause an ambient sound on the Focus mixer",
         inputSchema: z.object({
-          trackId: z.enum([
-            "rain",
-            "camp_fire",
-            "birds",
-            "city_road",
-            "children_audience",
-            "thunder",
-            "water_waves",
-            "wind",
-          ]),
+          trackId: z.enum(AMBIENT_TRACK_IDS),
           play: z.boolean(),
         }),
       }),

@@ -7,19 +7,19 @@ export const SOUND_PRESETS: Array<{
 }> = [
   { id: "rain-soft", label: "Soft rain", tracks: [{ id: "rain", volume: 40 }] },
   {
-    id: "rain-wind",
-    label: "Rain + wind",
+    id: "forest",
+    label: "Forest",
     tracks: [
-      { id: "rain", volume: 55 },
-      { id: "wind", volume: 30 },
+      { id: "birds", volume: 40 },
+      { id: "summer_insects", volume: 20 },
     ],
   },
   {
-    id: "cafe",
-    label: "Cafe",
+    id: "rain-coast",
+    label: "Rain + coast",
     tracks: [
-      { id: "city_road", volume: 35 },
-      { id: "children_audience", volume: 25 },
+      { id: "rain", volume: 45 },
+      { id: "winds_and_waves", volume: 25 },
     ],
   },
 ];

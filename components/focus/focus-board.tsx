@@ -1,6 +1,16 @@
 "use client";
 
-import Image from "next/image";
+import {
+  Bird,
+  Bug,
+  CloudLightning,
+  CloudRain,
+  Flame,
+  Flower2,
+  Sunrise,
+  Waves,
+  type LucideIcon,
+} from "lucide-react";
 
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { TooBig } from "@/components/focus/too-big";
@@ -14,9 +24,20 @@ import {
   toggleTaskAction,
 } from "@/lib/actions/tasks";
 import { SOUND_PRESETS } from "@/lib/focus/presets";
-import { AMBIENT_TRACKS } from "@/lib/focus/tracks";
+import { AMBIENT_TRACKS, type AmbientTrackId } from "@/lib/focus/tracks";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/lib/db/schema";
+
+const TRACK_ICONS: Record<AmbientTrackId, LucideIcon> = {
+  rain: CloudRain,
+  camp_fire: Flame,
+  birds: Bird,
+  morning_birds: Sunrise,
+  birds_spring: Flower2,
+  summer_insects: Bug,
+  winds_and_waves: Waves,
+  thunder: CloudLightning,
+};
 
 function pad(value: number) {
   return String(value).padStart(2, "0");
@@ -166,7 +187,7 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
         <details className="rounded-xl border border-border bg-card p-4">
           <summary className="cursor-pointer text-sm font-medium">Ambient</summary>
           <p className="mt-3 text-sm text-muted-foreground">
-            Add mp3s to public/audio/ to enable mixers. Last mix is remembered.
+            Mix sounds and adjust their volume. Volume levels are saved on this device.
           </p>
           <div className="mt-2 flex flex-wrap gap-1">
             {SOUND_PRESETS.map((preset) => (
@@ -181,38 +202,41 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
               </Button>
             ))}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-3 space-y-2">
             {AMBIENT_TRACKS.map((track) => {
               const state = tracks[track.id];
+              const Icon = TRACK_ICONS[track.id];
               return (
                 <div
                   key={track.id}
-                  className="rounded-xl border border-border p-3"
+                  className="rounded-lg border border-border px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
-                    <Image src={track.icon} alt="" width={36} height={36} />
-                    <div>
-                      <p className="text-sm font-medium">{track.label}</p>
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        disabled={state.failed}
-                        onClick={() => toggleTrack(track.id)}
-                      >
-                        {state.playing ? "Pause" : "Play"}
-                      </Button>
-                    </div>
+                    <Icon
+                      className="size-4 shrink-0 text-theme-forest-green"
+                      aria-hidden
+                    />
+                    <p className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {track.label}
+                    </p>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => toggleTrack(track.id)}
+                    >
+                      {state.playing ? "Pause" : state.failed ? "Retry" : "Play"}
+                    </Button>
                   </div>
                   <input
                     type="range"
                     min={0}
                     max={100}
                     value={state.volume}
-                    disabled={state.failed}
                     onChange={(event) =>
                       setTrackVolume(track.id, Number(event.currentTarget.value))
                     }
-                    className="mt-2 w-full"
+                    className="mt-1 w-full"
                   />
                 </div>
               );

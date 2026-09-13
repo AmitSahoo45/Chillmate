@@ -11,7 +11,11 @@ import {
 } from "react";
 
 import { SOUND_PRESETS } from "@/lib/focus/presets";
-import { AMBIENT_TRACKS, type AmbientTrackId } from "@/lib/focus/tracks";
+import {
+  AMBIENT_TRACKS,
+  getAmbientTrackSrc,
+  type AmbientTrackId,
+} from "@/lib/focus/tracks";
 
 type Mode = "pomodoro" | "short" | "long";
 
@@ -322,8 +326,11 @@ export function WorkspaceStateProvider({
 
   const ensureAudio = useCallback((id: AmbientTrackId, volume: number) => {
     const existing = audioRefs.current[id];
-    if (existing) return existing;
-    const audio = new Audio(`/audio/${id}.mp3`);
+    if (existing) {
+      if (existing.error) existing.load();
+      return existing;
+    }
+    const audio = new Audio(getAmbientTrackSrc(id));
     audio.loop = true;
     audio.preload = "none";
     audio.volume = volume / 100;
@@ -340,7 +347,6 @@ export function WorkspaceStateProvider({
   const toggleTrack = useCallback(
     (id: AmbientTrackId) => {
       const current = tracks[id];
-      if (current.failed) return;
       if (current.playing) {
         audioRefs.current[id]?.pause();
         setTracks((prev) => ({
@@ -353,7 +359,7 @@ export function WorkspaceStateProvider({
       audio.volume = current.volume / 100;
       setTracks((prev) => ({
         ...prev,
-        [id]: { ...prev[id], playing: true },
+        [id]: { ...prev[id], failed: false, playing: true },
       }));
       void audio.play().catch(() => {
         setTracks((now) => ({
