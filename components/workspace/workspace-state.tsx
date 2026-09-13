@@ -100,14 +100,18 @@ function defaultDurations() {
   return { pomodoro: 25 * 60, short: 5 * 60, long: 15 * 60 };
 }
 
-function loadTimer() {
-  const fallback = {
+function defaultTimer() {
+  return {
     mode: "pomodoro" as Mode,
     remaining: 25 * 60,
     isPaused: true,
     period: 1,
     durations: defaultDurations(),
   };
+}
+
+function loadTimer() {
+  const fallback = defaultTimer();
   if (typeof window === "undefined") return fallback;
   const saved = readJson(TIMER_KEY) as {
     mode?: Mode;
@@ -182,16 +186,16 @@ export function WorkspaceStateProvider({
 }) {
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [dumpOpen, setDumpOpen] = useState(false);
-  const [mode, setModeState] = useState<Mode>(() => loadTimer().mode);
-  const [isPaused, setIsPaused] = useState(() => loadTimer().isPaused);
-  const [period, setPeriod] = useState(() => loadTimer().period);
-  const [durations, setDurations] = useState(() => loadTimer().durations);
-  const [remaining, setRemaining] = useState(() => loadTimer().remaining);
-  const [tracks, setTracks] = useState(loadTracks);
-  const [visualTick, setVisualTickState] = useState(
-    () => typeof window !== "undefined" && window.localStorage.getItem(TICK_KEY) === "1",
-  );
+  const [mode, setModeState] = useState<Mode>("pomodoro");
+  const [isPaused, setIsPaused] = useState(true);
+  const [period, setPeriod] = useState(1);
+  const [durations, setDurations] = useState(defaultDurations);
+  const [remaining, setRemaining] = useState(25 * 60);
+  const [tracks, setTracks] = useState(() => ({ ...initialTracks }));
+  const [visualTick, setVisualTickState] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [minutePulse, setMinutePulse] = useState(false);
+  const hydratedRef = useRef(false);
   const tracksRef = useRef(tracks);
   const periodRef = useRef(period);
   const remainingRef = useRef(remaining);
@@ -209,7 +213,32 @@ export function WorkspaceStateProvider({
     tracksRef.current = tracks;
   }, [remaining, mode, durations, isPaused, period, tracks]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- localStorage after SSR */
   useEffect(() => {
+    const t = loadTimer();
+    setModeState(t.mode);
+    setIsPaused(t.isPaused);
+    setPeriod(t.period);
+    setDurations(t.durations);
+    setRemaining(t.remaining);
+    remainingRef.current = t.remaining;
+    modeRef.current = t.mode;
+    durationsRef.current = t.durations;
+    isPausedRef.current = t.isPaused;
+    periodRef.current = t.period;
+    setTracks(loadTracks());
+    try {
+      setVisualTickState(window.localStorage.getItem(TICK_KEY) === "1");
+    } catch {
+      setVisualTickState(false);
+    }
+    hydratedRef.current = true;
+    setHydrated(true);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!hydrated) return;
     writeJson(TIMER_KEY, {
       mode,
       remaining: remainingRef.current,
@@ -219,10 +248,11 @@ export function WorkspaceStateProvider({
       endsAt: isPaused ? null : (endsAtRef.current ?? Date.now() + remainingRef.current * 1000),
       savedAt: Date.now(),
     });
-  }, [mode, isPaused, period, durations]);
+  }, [mode, isPaused, period, durations, hydrated]);
 
   useEffect(() => {
     const flush = () => {
+      if (!hydratedRef.current) return;
       writeJson(TIMER_KEY, {
         mode: modeRef.current,
         remaining: remainingRef.current,
@@ -247,6 +277,7 @@ export function WorkspaceStateProvider({
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     writeJson(
       MIX_KEY,
       Object.fromEntries(
@@ -256,7 +287,7 @@ export function WorkspaceStateProvider({
         ]),
       ),
     );
-  }, [tracks]);
+  }, [tracks, hydrated]);
 
   useEffect(() => {
     setAmbientFailHandler((id) => {

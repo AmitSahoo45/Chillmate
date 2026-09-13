@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, isNotNull, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNotNull, ne, or } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { jobApplications } from "@/lib/db/schema";
@@ -59,14 +59,17 @@ export async function listPinnedJobs(userId: string) {
 }
 
 export async function listFollowUpJobs(userId: string, limit = 5) {
-  const rows = await listJobs(userId);
-  return rows
-    .filter((row) =>
-      row.status === "applied" ||
-      row.status === "review" ||
-      row.status === "interview",
+  return db
+    .select()
+    .from(jobApplications)
+    .where(
+      and(
+        eq(jobApplications.userId, userId),
+        inArray(jobApplications.status, ["applied", "review", "interview"]),
+      ),
     )
-    .slice(0, limit);
+    .orderBy(desc(jobApplications.updatedAt))
+    .limit(limit);
 }
 
 export async function getJob(userId: string, id: string) {

@@ -410,12 +410,14 @@ export async function POST(req: Request) {
           trackId: z.enum(AMBIENT_TRACK_IDS),
           play: z.boolean(),
         }),
+        execute: async (input) => input,
       }),
       setPomodoroMinutes: tool({
         description: "Set the pomodoro focus duration in minutes",
         inputSchema: z.object({
           minutes: z.number().min(POMODORO_MIN).max(POMODORO_MAX),
         }),
+        execute: async (input) => input,
       }),
     },
     async onFinish({ text, toolResults }) {

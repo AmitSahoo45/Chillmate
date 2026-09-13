@@ -9,8 +9,6 @@ import { parseHttpUrl } from "@/lib/validation";
 export type BeforeInterviewFilter = "all" | "yes" | "no" | "maybe";
 export type PriorityFilter = "all" | "high" | "medium" | "low";
 
-const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const;
-
 export async function listErrorSheets(
   userId: string,
   opts: {
@@ -23,7 +21,7 @@ export async function listErrorSheets(
   const priority = opts.priority ?? "all";
   const pattern = searchPattern(opts.query ?? "");
 
-  const rows = await db
+  return db
     .select()
     .from(errorSheets)
     .where(
@@ -45,18 +43,12 @@ export async function listErrorSheets(
           : undefined,
       ),
     )
-    .orderBy(desc(errorSheets.updatedAt))
+    .orderBy(
+      asc(errorSheets.isMistakeCorrected),
+      sql`case when ${errorSheets.revisionPriority} = 'high' then 0 when ${errorSheets.revisionPriority} = 'medium' then 1 else 2 end`,
+      desc(errorSheets.updatedAt),
+    )
     .limit(LIST_LIMIT);
-
-  return rows.sort((a, b) => {
-      if (a.isMistakeCorrected !== b.isMistakeCorrected) {
-        return a.isMistakeCorrected ? 1 : -1;
-      }
-      const rank =
-        PRIORITY_RANK[a.revisionPriority] - PRIORITY_RANK[b.revisionPriority];
-      if (rank !== 0) return rank;
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
-    });
 }
 
 export async function listPinnedErrorSheets(userId: string) {

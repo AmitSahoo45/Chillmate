@@ -25,11 +25,13 @@ import type { AmbientTrackId } from "@/lib/focus/tracks";
 import { CHAT_USER_TEXT_MAX, POMODORO_MAX, POMODORO_MIN } from "@/lib/limits";
 
 function toUiMessages(rows: CopilotMessage[]): UIMessage[] {
-  return rows.map((row) => ({
-    id: row.id,
-    role: row.role === "user" ? "user" : row.role === "system" ? "system" : "assistant",
-    parts: [{ type: "text", text: row.content }],
-  }));
+  return rows
+    .filter((row) => row.role !== "system")
+    .map((row) => ({
+      id: row.id,
+      role: row.role === "user" ? "user" : "assistant",
+      parts: [{ type: "text", text: row.content }],
+    }));
 }
 
 export function CopilotPanel({

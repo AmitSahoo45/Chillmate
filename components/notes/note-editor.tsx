@@ -138,27 +138,13 @@ export function NoteEditor({
   const [description, setDescription] = useState(initial.description);
   const [tags, setTags] = useState(initial.tags);
   const [body, setBody] = useState(initial.body);
-  const [zen, setZen] = useState(() => readStored(ZEN_KEY) === "1");
-  const [goal, setGoal] = useState(() => {
-    const stored = Number(readStored(GOAL_KEY));
-    return Number.isFinite(stored) && stored > 0
-      ? Math.min(5000, Math.round(stored))
-      : DEFAULT_GOAL;
-  });
+  const [zen, setZen] = useState(false);
+  const [goal, setGoal] = useState(DEFAULT_GOAL);
   const [baseline, setBaseline] = useState(() =>
     snapshotOf({ title: initial.title, description: initial.description, tags: initial.tags, body: initial.body }),
   );
-  const [pendingDraft, setPendingDraft] = useState<string | null>(() => {
-    const raw = readStored(storageKey);
-    if (!raw) return null;
-    if (
-      raw ===
-      snapshotOf({ title: initial.title, description: initial.description, tags: initial.tags, body: initial.body })
-    ) {
-      return null;
-    }
-    return looksLikeDraft(raw) ? raw : null;
-  });
+  const [pendingDraft, setPendingDraft] = useState<string | null>(null);
+  const [prefsReady, setPrefsReady] = useState(false);
   const [draftTime, setDraftTime] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
@@ -182,9 +168,37 @@ export function NoteEditor({
     }
   }
 
+  /* eslint-disable react-hooks/set-state-in-effect -- localStorage after SSR */
+  useEffect(() => {
+    setZen(readStored(ZEN_KEY) === "1");
+    const storedGoal = Number(readStored(GOAL_KEY));
+    setGoal(
+      Number.isFinite(storedGoal) && storedGoal > 0
+        ? Math.min(5000, Math.round(storedGoal))
+        : DEFAULT_GOAL,
+    );
+    const current = snapshotOf({ title, description, tags, body });
+    const server = snapshotOf({
+      title: initial.title,
+      description: initial.description,
+      tags: initial.tags,
+      body: initial.body,
+    });
+    if (current === server) {
+      const raw = readStored(storageKey);
+      if (raw && raw !== server && looksLikeDraft(raw)) {
+        setPendingDraft(raw);
+      }
+    }
+    setPrefsReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one restore; skip if already typed
+  }, [storageKey]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   // Reconcile localStorage with the baseline (debounced), and flush on
   // page hide so a sudden navigation never loses the last keystrokes.
   useEffect(() => {
+    if (!prefsReady) return;
     const snapshot = snapshotOf({ title, description, tags, body });
     const flush = (current: string) => {
       if (current === baseline) {
@@ -207,7 +221,7 @@ export function NoteEditor({
       window.removeEventListener("beforeunload", onBeforeUnload);
       window.clearTimeout(timer);
     };
-  }, [title, description, tags, body, baseline, storageKey]);
+  }, [title, description, tags, body, baseline, storageKey, prefsReady]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

@@ -91,9 +91,9 @@ export async function deleteSubject(userId: string, id: string) {
 }
 
 export async function countNotesForSubject(userId: string, subjectId: string) {
-  const rows = await db
-    .select({ id: notes.id })
+  const [row] = await db
+    .select({ value: sql<number>`cast(count(*) as int)` })
     .from(notes)
     .where(and(eq(notes.userId, userId), eq(notes.subjectId, subjectId)));
-  return rows.length;
+  return row?.value ?? 0;
 }

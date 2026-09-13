@@ -85,8 +85,11 @@ export async function inboxSummary(userId: string) {
     return { subjectId: null as string | null, total: 0, weekCount: 0 };
   }
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const active = await db
-    .select({ id: notes.id, updatedAt: notes.updatedAt })
+  const [stats] = await db
+    .select({
+      total: sql<number>`cast(count(*) as int)`,
+      weekCount: sql<number>`cast(count(*) filter (where ${notes.updatedAt} > ${weekAgo}) as int)`,
+    })
     .from(notes)
     .where(
       and(
@@ -97,8 +100,8 @@ export async function inboxSummary(userId: string) {
     );
   return {
     subjectId: inbox.id,
-    total: active.length,
-    weekCount: active.filter((row) => row.updatedAt > weekAgo).length,
+    total: stats?.total ?? 0,
+    weekCount: stats?.weekCount ?? 0,
   };
 }
 
