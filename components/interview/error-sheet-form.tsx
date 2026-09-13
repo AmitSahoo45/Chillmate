@@ -94,6 +94,7 @@ export function ErrorSheetForm({
           id="probName"
           name="probName"
           required
+          maxLength={200}
           defaultValue={defaults?.probName ?? ""}
         />
       </div>
@@ -105,6 +106,8 @@ export function ErrorSheetForm({
           id="probLink"
           name="probLink"
           type="url"
+          maxLength={2000}
+          placeholder="https://"
           defaultValue={defaults?.probLink ?? ""}
         />
       </div>

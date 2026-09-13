@@ -10,9 +10,11 @@ import {
   setErrorSheetPinned,
   updateErrorSheet,
 } from "@/lib/db/queries/error-sheets";
+import { FIELD, clip } from "@/lib/limits";
 import { requireUserId } from "@/lib/session";
 import { parseTags } from "@/lib/tags";
 import { isUuid } from "@/lib/uuid";
+import { parseHttpUrl } from "@/lib/validation";
 
 function asPriority(value: string): "high" | "medium" | "low" {
   if (value === "high" || value === "medium" || value === "low") return value;
@@ -25,10 +27,13 @@ function asLookup(value: string): "yes" | "no" | "maybe" {
 }
 
 function readSheetForm(formData: FormData) {
-  const probName = String(formData.get("probName") ?? "").trim();
-  const probLink = String(formData.get("probLink") ?? "").trim();
-  const mistake = String(formData.get("mistake") ?? "").trim();
-  const improvement = String(formData.get("improvement") ?? "").trim();
+  const probName = clip(String(formData.get("probName") ?? "").trim(), FIELD.name);
+  const probLink = parseHttpUrl(String(formData.get("probLink") ?? ""));
+  const mistake = clip(String(formData.get("mistake") ?? "").trim(), FIELD.mistake);
+  const improvement = clip(
+    String(formData.get("improvement") ?? "").trim(),
+    FIELD.improvement,
+  );
   const isMistakeCorrected = formData.get("isMistakeCorrected") === "on";
   const revisionPriority = asPriority(
     String(formData.get("revisionPriority") ?? "high"),

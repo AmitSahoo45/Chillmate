@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { HttpLink } from "@/components/http-link";
 import { ErrorSheetForm } from "@/components/interview/error-sheet-form";
 import { updateErrorSheetAction } from "@/lib/actions/error-sheets";
 import { getErrorSheet } from "@/lib/db/queries/error-sheets";
@@ -29,14 +30,9 @@ export default async function SheetPage({
           All sheets
         </Link>
         {sheet.probLink ? (
-          <a
-            href={sheet.probLink}
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
+          <HttpLink href={sheet.probLink} className="underline">
             Open problem
-          </a>
+          </HttpLink>
         ) : null}
       </div>
       <h1 className="text-3xl font-semibold tracking-tight">{sheet.probName}</h1>

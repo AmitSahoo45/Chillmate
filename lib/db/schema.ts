@@ -47,6 +47,7 @@ export const accounts = pgTable(
   ],
 );
 
+/** Auth.js adapter table. Unused while session strategy is JWT (`auth.config.ts`). Kept so DrizzleAdapter schema stays complete. */
 export const sessions = pgTable("session", {
   sessionToken: text("sessionToken").primaryKey(),
   userId: text("userId")

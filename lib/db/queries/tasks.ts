@@ -2,18 +2,24 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { tasks } from "@/lib/db/schema";
+import { LIST_LIMIT } from "@/lib/limits";
 
 export async function listTasks(userId: string) {
   return db
     .select()
     .from(tasks)
     .where(eq(tasks.userId, userId))
-    .orderBy(desc(tasks.createdAt));
+    .orderBy(desc(tasks.createdAt))
+    .limit(LIST_LIMIT);
 }
 
 export async function listOpenTasks(userId: string, limit = 8) {
-  const rows = await listTasks(userId);
-  return rows.filter((row) => !row.completed).slice(0, limit);
+  return db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.userId, userId), eq(tasks.completed, false)))
+    .orderBy(desc(tasks.createdAt))
+    .limit(limit);
 }
 
 export async function getTask(userId: string, id: string) {

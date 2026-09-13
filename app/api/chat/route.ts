@@ -11,7 +11,10 @@ import {
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { appendMessages } from "@/lib/db/queries/copilot";
+import {
+  appendMessages,
+  countRecentUserChats,
+} from "@/lib/db/queries/copilot";
 import {
   createErrorSheet,
   listErrorSheets,
@@ -37,8 +40,21 @@ import {
 import { createTask, listTasks, toggleTask } from "@/lib/db/queries/tasks";
 import { tryParseDateOnly } from "@/lib/date";
 import { isGeminiConfigured } from "@/lib/env";
+import {
+  CHAT_BODY_MAX,
+  CHAT_MAX_OUTPUT_TOKENS,
+  CHAT_MESSAGES_MAX,
+  CHAT_RATE_PER_MIN,
+  CHAT_USER_TEXT_MAX,
+  FIELD,
+  POMODORO_MAX,
+  POMODORO_MIN,
+  clip,
+} from "@/lib/limits";
 import { noteTitle } from "@/lib/notes/title";
+import { allowRequest } from "@/lib/rate-limit";
 import { parseTags } from "@/lib/tags";
+import { parseHttpUrl } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -89,12 +105,42 @@ export async function POST(req: Request) {
   }
 
   const userId = session.user.id;
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const raw = await req.text();
+  if (raw.length > CHAT_BODY_MAX) {
+    return new Response("Payload too large", { status: 413 });
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return new Response("Invalid JSON", { status: 400 });
+  }
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    !Array.isArray((parsed as { messages?: unknown }).messages)
+  ) {
+    return new Response("Invalid body", { status: 400 });
+  }
+  const messages = (parsed as { messages: UIMessage[] }).messages.slice(
+    -CHAT_MESSAGES_MAX,
+  );
   const lastUser = [...messages].reverse().find((message) => message.role === "user");
   const userText = lastUser ? textFrom(lastUser) : "";
+  if (userText.length > CHAT_USER_TEXT_MAX) {
+    return new Response("Message too long", { status: 400 });
+  }
+  if (!allowRequest(`chat:${userId}`, CHAT_RATE_PER_MIN, 60_000)) {
+    return new Response("Too many requests", { status: 429 });
+  }
+  const recent = await countRecentUserChats(userId);
+  if (recent >= CHAT_RATE_PER_MIN) {
+    return new Response("Too many requests", { status: 429 });
+  }
 
   const result = streamText({
     model: google("gemini-2.5-flash"),
+    maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
     system:
       "You are Chillmate copilot inside a private study/job workspace. Use tools to read and write the user's notes, interview sheets, jobs, and tasks. Never delete anything yourself — call proposeDelete and wait for UI confirmation. Never move notes yourself — call proposeMove and wait for UI confirmation. If the user asks to triage Inbox, list Inbox notes and proposeMove each to a fitting subject. If they ask to quiz on interview mistakes, listErrorSheets and quiz on uncorrected high-priority items one at a time. If they ask what to do for 15 minutes, use listTasks and uncorrected error sheets and pick one small action. You may call playAmbient or setPomodoroMinutes for Focus controls.",
     messages: await convertToModelMessages(messages),
@@ -102,20 +148,20 @@ export async function POST(req: Request) {
     tools: {
       listSubjects: tool({
         description: "List the user's note subjects",
-        inputSchema: z.object({ query: z.string().optional() }),
+        inputSchema: z.object({ query: z.string().max(FIELD.query).optional() }),
         execute: async ({ query }) => listSubjects(userId, query ?? ""),
       }),
       createSubject: tool({
         description: "Create a subject",
         inputSchema: z.object({
-          name: z.string(),
-          description: z.string().optional(),
-          tags: z.string().optional(),
+          name: z.string().max(FIELD.name),
+          description: z.string().max(FIELD.description).optional(),
+          tags: z.string().max(400).optional(),
         }),
         execute: async ({ name, description, tags }) =>
           createSubject(userId, {
-            name,
-            description: description ?? "",
+            name: clip(name, FIELD.name),
+            description: clip(description ?? "", FIELD.description),
             tags: parseTags(tags ?? ""),
           }),
       }),
@@ -123,7 +169,7 @@ export async function POST(req: Request) {
         description: "List notes, optionally in one subject",
         inputSchema: z.object({
           subjectId: z.string().uuid().optional(),
-          query: z.string().optional(),
+          query: z.string().max(FIELD.query).optional(),
         }),
         execute: async ({ subjectId, query }) => {
           if (subjectId) return listNotes(userId, subjectId, query ?? "");
@@ -134,17 +180,17 @@ export async function POST(req: Request) {
         description: "Create a note in a subject",
         inputSchema: z.object({
           subjectId: z.string().uuid(),
-          title: z.string().optional(),
-          description: z.string().optional(),
-          bodyMarkdown: z.string().optional(),
-          tags: z.string().optional(),
+          title: z.string().max(FIELD.title).optional(),
+          description: z.string().max(FIELD.description).optional(),
+          bodyMarkdown: z.string().max(FIELD.body).optional(),
+          tags: z.string().max(400).optional(),
         }),
         execute: async (input) => {
-          const bodyMarkdown = input.bodyMarkdown ?? "";
+          const bodyMarkdown = clip(input.bodyMarkdown ?? "", FIELD.body);
           const row = await createNote(userId, {
             subjectId: input.subjectId,
-            title: noteTitle(input.title ?? "", bodyMarkdown),
-            description: input.description ?? "",
+            title: clip(noteTitle(input.title ?? "", bodyMarkdown), FIELD.title),
+            description: clip(input.description ?? "", FIELD.description),
             bodyMarkdown,
             tags: parseTags(input.tags ?? ""),
           });
@@ -155,10 +201,10 @@ export async function POST(req: Request) {
         description: "Update a note",
         inputSchema: z.object({
           id: z.string().uuid(),
-          title: z.string().optional(),
-          description: z.string().optional(),
-          bodyMarkdown: z.string().optional(),
-          tags: z.string().optional(),
+          title: z.string().max(FIELD.title).optional(),
+          description: z.string().max(FIELD.description).optional(),
+          bodyMarkdown: z.string().max(FIELD.body).optional(),
+          tags: z.string().max(400).optional(),
         }),
         execute: async ({ id, tags, ...rest }) => {
           const parsedTags = tags === undefined ? undefined : parseTags(tags);
@@ -175,37 +221,44 @@ export async function POST(req: Request) {
       }),
       listErrorSheets: tool({
         description: "List interview error sheets",
-        inputSchema: z.object({ query: z.string().optional() }),
+        inputSchema: z.object({ query: z.string().max(FIELD.query).optional() }),
         execute: async ({ query }) => listErrorSheets(userId, { query }),
       }),
       createErrorSheet: tool({
         description: "Create an interview error sheet",
         inputSchema: z.object({
-          probName: z.string(),
-          probLink: z.string().optional(),
-          mistake: z.string(),
-          improvement: z.string().optional(),
-          tags: z.string().optional(),
+          probName: z.string().max(FIELD.name),
+          probLink: z.string().max(FIELD.url).optional(),
+          mistake: z.string().max(FIELD.mistake),
+          improvement: z.string().max(FIELD.improvement).optional(),
+          tags: z.string().max(400).optional(),
         }),
-        execute: async (input) =>
-          createErrorSheet(userId, {
-            probName: input.probName,
-            probLink: input.probLink ?? "",
-            mistake: input.mistake,
-            improvement: input.improvement,
+        execute: async (input) => {
+          let probLink = "";
+          try {
+            probLink = parseHttpUrl(input.probLink ?? "");
+          } catch {
+            return { error: "probLink must be an http or https URL." };
+          }
+          return createErrorSheet(userId, {
+            probName: clip(input.probName, FIELD.name),
+            probLink,
+            mistake: clip(input.mistake, FIELD.mistake),
+            improvement: clip(input.improvement ?? "", FIELD.improvement),
             tags: parseTags(input.tags ?? ""),
-          }),
+          });
+        },
       }),
       listJobs: tool({
         description: "List job applications",
-        inputSchema: z.object({ query: z.string().optional() }),
+        inputSchema: z.object({ query: z.string().max(FIELD.query).optional() }),
         execute: async ({ query }) => listJobs(userId, { query, status: "all" }),
       }),
       createJob: tool({
         description: "Create a job application",
         inputSchema: z.object({
-          company: z.string(),
-          position: z.string(),
+          company: z.string().max(FIELD.company),
+          position: z.string().max(FIELD.position),
           dateApplied: z
             .string()
             .describe("Applied date in YYYY-MM-DD format, e.g. 2026-09-04"),
@@ -228,8 +281,8 @@ export async function POST(req: Request) {
             };
           }
           return createJob(userId, {
-            company: input.company,
-            position: input.position,
+            company: clip(input.company, FIELD.company),
+            position: clip(input.position, FIELD.position),
             dateApplied,
             status: input.status as JobStatus,
             campus: input.campus,
@@ -259,8 +312,8 @@ export async function POST(req: Request) {
       }),
       createTask: tool({
         description: "Create a focus task",
-        inputSchema: z.object({ text: z.string() }),
-        execute: async ({ text }) => createTask(userId, text),
+        inputSchema: z.object({ text: z.string().max(FIELD.task) }),
+        execute: async ({ text }) => createTask(userId, clip(text, FIELD.task)),
       }),
       toggleTask: tool({
         description: "Toggle a task completed state",
@@ -273,7 +326,7 @@ export async function POST(req: Request) {
         inputSchema: z.object({
           type: z.enum(["subject", "note", "error_sheet", "job", "task"]),
           id: z.string().uuid(),
-          label: z.string(),
+          label: z.string().max(FIELD.title),
         }),
         execute: async (input) => input,
       }),
@@ -316,7 +369,9 @@ export async function POST(req: Request) {
       }),
       setPomodoroMinutes: tool({
         description: "Set the pomodoro focus duration in minutes",
-        inputSchema: z.object({ minutes: z.number() }),
+        inputSchema: z.object({
+          minutes: z.number().min(POMODORO_MIN).max(POMODORO_MAX),
+        }),
       }),
     },
     async onFinish({ text, toolResults }) {

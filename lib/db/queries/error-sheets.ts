@@ -1,9 +1,10 @@
-import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { errorSheets } from "@/lib/db/schema";
+import { LIST_LIMIT, searchPattern } from "@/lib/limits";
 import { PIN_LIMIT } from "@/lib/pins";
-import { matchesQuery } from "@/lib/tags";
+import { parseHttpUrl } from "@/lib/validation";
 
 export type BeforeInterviewFilter = "all" | "yes" | "no" | "maybe";
 export type PriorityFilter = "all" | "high" | "medium" | "low";
@@ -18,32 +19,36 @@ export async function listErrorSheets(
     priority?: PriorityFilter;
   } = {},
 ) {
+  const lookup = opts.lookup ?? "all";
+  const priority = opts.priority ?? "all";
+  const pattern = searchPattern(opts.query ?? "");
+
   const rows = await db
     .select()
     .from(errorSheets)
-    .where(eq(errorSheets.userId, userId))
-    .orderBy(desc(errorSheets.updatedAt));
+    .where(
+      and(
+        eq(errorSheets.userId, userId),
+        lookup !== "all"
+          ? eq(errorSheets.beforeInterviewLookup, lookup)
+          : undefined,
+        priority !== "all"
+          ? eq(errorSheets.revisionPriority, priority)
+          : undefined,
+        pattern
+          ? or(
+              ilike(errorSheets.probName, pattern),
+              ilike(errorSheets.mistake, pattern),
+              ilike(errorSheets.improvement, pattern),
+              sql`${errorSheets.tags}::text ilike ${pattern}`,
+            )
+          : undefined,
+      ),
+    )
+    .orderBy(desc(errorSheets.updatedAt))
+    .limit(LIST_LIMIT);
 
-  const lookup = opts.lookup ?? "all";
-  const priority = opts.priority ?? "all";
-  const query = opts.query ?? "";
-
-  return rows
-    .filter((row) => {
-      if (lookup !== "all" && row.beforeInterviewLookup !== lookup) {
-        return false;
-      }
-      if (priority !== "all" && row.revisionPriority !== priority) {
-        return false;
-      }
-      return matchesQuery(query, [
-        row.probName,
-        row.mistake,
-        row.improvement,
-        row.tags,
-      ]);
-    })
-    .sort((a, b) => {
+  return rows.sort((a, b) => {
       if (a.isMistakeCorrected !== b.isMistakeCorrected) {
         return a.isMistakeCorrected ? 1 : -1;
       }
@@ -90,7 +95,7 @@ export async function createErrorSheet(
     .values({
       userId,
       probName: data.probName,
-      probLink: data.probLink,
+      probLink: parseHttpUrl(data.probLink),
       mistake: data.mistake,
       improvement: data.improvement ?? "",
       isMistakeCorrected: data.isMistakeCorrected ?? false,
@@ -116,9 +121,14 @@ export async function updateErrorSheet(
     tags?: string[];
   },
 ) {
+  const patch = {
+    ...data,
+    probLink:
+      data.probLink === undefined ? undefined : parseHttpUrl(data.probLink),
+  };
   const [row] = await db
     .update(errorSheets)
-    .set(data)
+    .set(patch)
     .where(and(eq(errorSheets.id, id), eq(errorSheets.userId, userId)))
     .returning();
   return row ?? null;

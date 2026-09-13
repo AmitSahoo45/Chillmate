@@ -1,7 +1,8 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, gte, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { copilotMessages, copilotThreads } from "@/lib/db/schema";
+import { CHAT_RATE_PER_MIN } from "@/lib/limits";
 
 const COMPACT_AFTER = 40;
 const KEEP_RECENT = 20;
@@ -33,6 +34,23 @@ async function getOrCreateThread(userId: string) {
 
 function isSummaryRow(message: { role: string; content: string }) {
   return message.role === "system" && message.content.startsWith(SUMMARY_PREFIX);
+}
+
+export async function countRecentUserChats(userId: string, windowMs = 60_000) {
+  const thread = await getOrCreateThread(userId);
+  const since = new Date(Date.now() - windowMs);
+  const rows = await db
+    .select({ id: copilotMessages.id })
+    .from(copilotMessages)
+    .where(
+      and(
+        eq(copilotMessages.threadId, thread.id),
+        eq(copilotMessages.role, "user"),
+        gte(copilotMessages.createdAt, since),
+      ),
+    )
+    .limit(CHAT_RATE_PER_MIN);
+  return rows.length;
 }
 
 export async function listThreadMessages(userId: string) {

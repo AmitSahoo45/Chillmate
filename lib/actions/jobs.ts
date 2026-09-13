@@ -13,6 +13,7 @@ import {
   type JobStatus,
 } from "@/lib/db/queries/jobs";
 import { parseDateOnly } from "@/lib/date";
+import { FIELD, clip } from "@/lib/limits";
 import { requireUserId } from "@/lib/session";
 import { isUuid } from "@/lib/uuid";
 
@@ -38,8 +39,11 @@ function parseDate(value: string) {
 }
 
 function readJobForm(formData: FormData) {
-  const company = String(formData.get("company") ?? "").trim();
-  const position = String(formData.get("position") ?? "").trim();
+  const company = clip(String(formData.get("company") ?? "").trim(), FIELD.company);
+  const position = clip(
+    String(formData.get("position") ?? "").trim(),
+    FIELD.position,
+  );
   const dateApplied = parseDate(String(formData.get("dateApplied") ?? ""));
   const status = asStatus(String(formData.get("status") ?? "applied"));
   const campus = asCampus(String(formData.get("campus") ?? "oncampus"));
@@ -58,6 +62,9 @@ export async function createJobAction(formData: FormData) {
 
 export async function updateJobAction(id: string, formData: FormData) {
   const userId = await requireUserId();
+  if (!isUuid(id)) return;
+  const existing = await getJob(userId, id);
+  if (!existing) return;
   await updateJob(userId, id, readJobForm(formData));
   revalidatePath("/app/jobs");
   revalidatePath("/app");
@@ -65,6 +72,9 @@ export async function updateJobAction(id: string, formData: FormData) {
 
 export async function deleteJobAction(id: string) {
   const userId = await requireUserId();
+  if (!isUuid(id)) return;
+  const existing = await getJob(userId, id);
+  if (!existing) return;
   await deleteJob(userId, id);
   revalidatePath("/app/jobs");
   revalidatePath("/app");

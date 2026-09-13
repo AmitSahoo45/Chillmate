@@ -13,15 +13,22 @@ import {
   updateNote,
 } from "@/lib/db/queries/notes";
 import { getOrCreateInbox, getSubject } from "@/lib/db/queries/subjects";
+import { FIELD, clip } from "@/lib/limits";
 import { noteTitle } from "@/lib/notes/title";
 import { requireUserId } from "@/lib/session";
 import { parseTags } from "@/lib/tags";
 import { isUuid } from "@/lib/uuid";
 
 function readNoteForm(formData: FormData) {
-  const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
-  const title = noteTitle(String(formData.get("title") ?? ""), bodyMarkdown);
-  const description = String(formData.get("description") ?? "").trim();
+  const bodyMarkdown = clip(String(formData.get("bodyMarkdown") ?? ""), FIELD.body);
+  const title = clip(
+    noteTitle(String(formData.get("title") ?? ""), bodyMarkdown),
+    FIELD.title,
+  );
+  const description = clip(
+    String(formData.get("description") ?? "").trim(),
+    FIELD.description,
+  );
   const tags = parseTags(String(formData.get("tags") ?? ""));
   return { title, description, bodyMarkdown, tags };
 }
@@ -29,7 +36,7 @@ function readNoteForm(formData: FormData) {
 export async function dumpNoteAction(formData: FormData) {
   const userId = await requireUserId();
   const rawSubjectId = String(formData.get("subjectId") ?? "").trim();
-  const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
+  const bodyMarkdown = clip(String(formData.get("bodyMarkdown") ?? ""), FIELD.body);
   const subjectHint = rawSubjectId && isUuid(rawSubjectId) ? rawSubjectId : "";
 
   if (!bodyMarkdown.trim()) {
@@ -42,7 +49,7 @@ export async function dumpNoteAction(formData: FormData) {
   }
   if (!subject) redirect("/app/notes");
 
-  const title = noteTitle("", bodyMarkdown);
+  const title = clip(noteTitle("", bodyMarkdown), FIELD.title);
   const row = await createNote(userId, {
     subjectId: subject.id,
     title,
@@ -59,8 +66,8 @@ export async function dumpNoteAction(formData: FormData) {
 
 export async function dumpTaskAction(formData: FormData) {
   const userId = await requireUserId();
-  const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
-  const text = noteTitle("", bodyMarkdown);
+  const bodyMarkdown = clip(String(formData.get("bodyMarkdown") ?? ""), FIELD.body);
+  const text = clip(noteTitle("", bodyMarkdown), FIELD.task);
   if (!bodyMarkdown.trim()) redirect("/app");
   await createTask(userId, text);
   revalidatePath("/app");
@@ -73,8 +80,8 @@ export async function createNoteAction(subjectId: string, formData: FormData) {
   if (!isUuid(subjectId)) redirect("/app/notes");
   const subject = await getSubject(userId, subjectId);
   if (!subject) redirect("/app/notes");
-  const rawTitle = String(formData.get("title") ?? "").trim();
-  const bodyMarkdown = String(formData.get("bodyMarkdown") ?? "");
+  const rawTitle = clip(String(formData.get("title") ?? "").trim(), FIELD.title);
+  const bodyMarkdown = clip(String(formData.get("bodyMarkdown") ?? ""), FIELD.body);
   if (!rawTitle && !bodyMarkdown.trim()) {
     redirect(`/app/notes/${subjectId}`);
   }

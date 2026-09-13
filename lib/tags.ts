@@ -1,13 +1,16 @@
+import { FIELD, clip } from "@/lib/limits";
+
 export function parseTags(input: string): string[] {
   const seen = new Set<string>();
   const tags: string[] = [];
   for (const part of input.split(",")) {
-    const tag = part.trim();
+    const tag = clip(part.trim(), FIELD.tagLen);
     if (!tag) continue;
     const key = tag.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     tags.push(tag);
+    if (tags.length >= FIELD.tagsMax) break;
   }
   return tags;
 }

@@ -22,6 +22,7 @@ import { confirmDeleteAction, type DeletableType } from "@/lib/actions/delete";
 import { confirmMoveAction } from "@/lib/actions/notes";
 import type { CopilotMessage } from "@/lib/db/schema";
 import type { AmbientTrackId } from "@/lib/focus/tracks";
+import { CHAT_USER_TEXT_MAX, POMODORO_MAX, POMODORO_MIN } from "@/lib/limits";
 
 function toUiMessages(rows: CopilotMessage[]): UIMessage[] {
   return rows.map((row) => ({
@@ -87,6 +88,7 @@ function CopilotChat({
   const [input, setInput] = useState("");
   const [dismissedDeleteId, setDismissedDeleteId] = useState<string | null>(null);
   const [dismissedMoveKey, setDismissedMoveKey] = useState<string | null>(null);
+  const [timerProposal, setTimerProposal] = useState<number | null>(null);
   const { setPomodoroMinutes, toggleTrack, tracks } = useWorkspaceState();
   const seed = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
   const { messages, sendMessage, status } = useChat({
@@ -96,7 +98,10 @@ function CopilotChat({
         const minutes = Number(
           (toolCall.input as { minutes?: number }).minutes ?? 25,
         );
-        setPomodoroMinutes(minutes);
+        if (!Number.isFinite(minutes)) return;
+        setTimerProposal(
+          Math.max(POMODORO_MIN, Math.min(POMODORO_MAX, Math.round(minutes))),
+        );
       }
       if (toolCall.toolName === "playAmbient") {
         const payload = toolCall.input as {
@@ -176,6 +181,7 @@ function CopilotChat({
         {messages.length === 0 ? (
           <p className="text-muted-foreground">
             Ask to dump, triage Inbox, quiz a mistake, or pick 15 minutes.
+            Copilot sends your notes, tasks, and jobs to Gemini to answer.
           </p>
         ) : null}
         {messages.map((message) => (
@@ -225,7 +231,10 @@ function CopilotChat({
         <div className="flex gap-2">
           <Input
             value={input}
-            onChange={(event) => setInput(event.currentTarget.value)}
+            onChange={(event) =>
+              setInput(event.currentTarget.value.slice(0, CHAT_USER_TEXT_MAX))
+            }
+            maxLength={CHAT_USER_TEXT_MAX}
             placeholder={geminiReady ? "Ask Chillmate…" : "Gemini key missing"}
             disabled={!geminiReady || status === "streaming"}
           />
@@ -250,6 +259,11 @@ function CopilotChat({
             <AlertDialogDescription>
               Copilot cannot delete on its own. Confirm to remove this from your
               workspace.
+              {proposal ? (
+                <span className="mt-2 block font-mono text-xs">
+                  {proposal.type}:{proposal.id}
+                </span>
+              ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -292,6 +306,36 @@ function CopilotChat({
               }}
             >
               Move
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={timerProposal !== null}
+        onOpenChange={(next) => {
+          if (!next) setTimerProposal(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Copilot wants to set {timerProposal}m
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirm to change the Focus timer. Copilot cannot change it on its
+              own.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (timerProposal === null) return;
+                setPomodoroMinutes(timerProposal);
+                setTimerProposal(null);
+              }}
+            >
+              Set timer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

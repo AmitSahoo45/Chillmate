@@ -1,13 +1,24 @@
-import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { notes, subjects } from "@/lib/db/schema";
+import { LIST_LIMIT, searchPattern } from "@/lib/limits";
 import { isInboxName } from "@/lib/notes/title";
 import { PIN_LIMIT } from "@/lib/pins";
-import { matchesQuery } from "@/lib/tags";
 
 function archiveWhere(archived: boolean) {
   return archived ? isNotNull(notes.archivedAt) : isNull(notes.archivedAt);
+}
+
+function noteSearch(query: string) {
+  const pattern = searchPattern(query);
+  if (!pattern) return undefined;
+  return or(
+    ilike(notes.title, pattern),
+    ilike(notes.description, pattern),
+    ilike(notes.bodyMarkdown, pattern),
+    sql`${notes.tags}::text ilike ${pattern}`,
+  );
 }
 
 export async function listNotes(
@@ -16,7 +27,7 @@ export async function listNotes(
   query = "",
   archived = false,
 ) {
-  const rows = await db
+  return db
     .select()
     .from(notes)
     .where(
@@ -24,13 +35,11 @@ export async function listNotes(
         eq(notes.userId, userId),
         eq(notes.subjectId, subjectId),
         archiveWhere(archived),
+        noteSearch(query),
       ),
     )
-    .orderBy(desc(notes.updatedAt));
-
-  return rows.filter((row) =>
-    matchesQuery(query, [row.title, row.description, row.bodyMarkdown, row.tags]),
-  );
+    .orderBy(desc(notes.updatedAt))
+    .limit(LIST_LIMIT);
 }
 
 export async function listRecentNotes(userId: string, limit = 5) {
@@ -43,14 +52,12 @@ export async function listRecentNotes(userId: string, limit = 5) {
 }
 
 export async function listAllNotes(userId: string, query = "", archived = false) {
-  const rows = await db
+  return db
     .select()
     .from(notes)
-    .where(and(eq(notes.userId, userId), archiveWhere(archived)))
-    .orderBy(desc(notes.updatedAt));
-  return rows.filter((row) =>
-    matchesQuery(query, [row.title, row.description, row.bodyMarkdown, row.tags]),
-  );
+    .where(and(eq(notes.userId, userId), archiveWhere(archived), noteSearch(query)))
+    .orderBy(desc(notes.updatedAt))
+    .limit(LIST_LIMIT);
 }
 
 export async function listPinnedNotes(userId: string) {

@@ -5,7 +5,7 @@ export async function withDb<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (error) {
-    console.error("withDb falling back to degraded state:", error);
-    return fallback;
+    console.error("withDb failed", { requestId: crypto.randomUUID(), error });
+    throw error;
   }
 }

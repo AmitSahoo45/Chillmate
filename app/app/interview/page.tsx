@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { HttpLink } from "@/components/http-link";
 import { ErrorSheetForm } from "@/components/interview/error-sheet-form";
 import { PageHeader } from "@/components/page-header";
 import { PinForm } from "@/components/pin-form";
@@ -177,14 +178,12 @@ export default async function InterviewPage({
                     <p className="text-muted-foreground">{sheet.tags.join(", ")}</p>
                   ) : null}
                   {sheet.probLink ? (
-                    <a
+                    <HttpLink
                       href={sheet.probLink}
-                      target="_blank"
-                      rel="noreferrer"
                       className="inline-block underline"
                     >
                       Open problem
-                    </a>
+                    </HttpLink>
                   ) : null}
                   <div className="flex flex-wrap gap-2">
                     <PinForm

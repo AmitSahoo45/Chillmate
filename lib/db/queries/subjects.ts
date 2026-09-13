@@ -1,20 +1,29 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { notes, subjects } from "@/lib/db/schema";
+import { LIST_LIMIT, searchPattern } from "@/lib/limits";
 import { INBOX_NAME, isInboxName } from "@/lib/notes/title";
-import { matchesQuery } from "@/lib/tags";
 
 export async function listSubjects(userId: string, query = "") {
-  const rows = await db
+  const pattern = searchPattern(query);
+  return db
     .select()
     .from(subjects)
-    .where(eq(subjects.userId, userId))
-    .orderBy(desc(subjects.updatedAt));
-
-  return rows.filter((row) =>
-    matchesQuery(query, [row.name, row.description, row.tags]),
-  );
+    .where(
+      and(
+        eq(subjects.userId, userId),
+        pattern
+          ? or(
+              ilike(subjects.name, pattern),
+              ilike(subjects.description, pattern),
+              sql`${subjects.tags}::text ilike ${pattern}`,
+            )
+          : undefined,
+      ),
+    )
+    .orderBy(desc(subjects.updatedAt))
+    .limit(LIST_LIMIT);
 }
 
 export async function getSubject(userId: string, id: string) {

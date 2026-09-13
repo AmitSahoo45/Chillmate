@@ -1,9 +1,9 @@
-import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, ne, or } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { jobApplications } from "@/lib/db/schema";
+import { LIST_LIMIT, searchPattern } from "@/lib/limits";
 import { PIN_LIMIT } from "@/lib/pins";
-import { matchesQuery } from "@/lib/tags";
 
 export type JobStatus =
   | "wishlist"
@@ -21,23 +21,30 @@ export async function listJobs(
   userId: string,
   opts: { query?: string; status?: JobStatusFilter } = {},
 ) {
-  const rows = await db
+  const status = opts.status ?? "open";
+  const pattern = searchPattern(opts.query ?? "");
+
+  return db
     .select()
     .from(jobApplications)
-    .where(eq(jobApplications.userId, userId))
-    .orderBy(desc(jobApplications.updatedAt));
-
-  const status = opts.status ?? "open";
-  const query = opts.query ?? "";
-
-  return rows.filter((row) => {
-    if (status === "open") {
-      if (row.status === "rejected") return false;
-    } else if (status !== "all" && row.status !== status) {
-      return false;
-    }
-    return matchesQuery(query, [row.company, row.position]);
-  });
+    .where(
+      and(
+        eq(jobApplications.userId, userId),
+        status === "open"
+          ? ne(jobApplications.status, "rejected")
+          : status !== "all"
+            ? eq(jobApplications.status, status)
+            : undefined,
+        pattern
+          ? or(
+              ilike(jobApplications.company, pattern),
+              ilike(jobApplications.position, pattern),
+            )
+          : undefined,
+      ),
+    )
+    .orderBy(desc(jobApplications.updatedAt))
+    .limit(LIST_LIMIT);
 }
 
 export async function listPinnedJobs(userId: string) {
