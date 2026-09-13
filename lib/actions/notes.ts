@@ -69,6 +69,23 @@ export async function dumpTaskAction(formData: FormData) {
   const bodyMarkdown = clip(String(formData.get("bodyMarkdown") ?? ""), FIELD.body);
   const text = clip(noteTitle("", bodyMarkdown), FIELD.task);
   if (!bodyMarkdown.trim()) redirect("/app");
+  const rawSubjectId = String(formData.get("subjectId") ?? "").trim();
+  const subjectHint = rawSubjectId && isUuid(rawSubjectId) ? rawSubjectId : "";
+  let subject = subjectHint ? await getSubject(userId, subjectHint) : null;
+  if (!subject) {
+    subject = await getOrCreateInbox(userId);
+  }
+  if (subject) {
+    await createNote(userId, {
+      subjectId: subject.id,
+      title: clip(noteTitle("", bodyMarkdown), FIELD.title),
+      description: "",
+      bodyMarkdown,
+      tags: [],
+    });
+    revalidatePath("/app/notes");
+    revalidatePath(`/app/notes/${subject.id}`);
+  }
   await createTask(userId, text);
   revalidatePath("/app");
   revalidatePath("/app/focus");

@@ -4,8 +4,13 @@ import { listTasks } from "@/lib/db/queries/tasks";
 import { withDb } from "@/lib/db/safe";
 import { requireUserId } from "@/lib/session";
 
-export default async function FocusPage() {
+export default async function FocusPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ task?: string }>;
+}) {
   const userId = await requireUserId();
+  const { task } = await searchParams;
   const tasks = await withDb([], () => listTasks(userId));
 
   return (
@@ -14,7 +19,7 @@ export default async function FocusPage() {
         title="Focus"
         description="Pomodoro, tasks, and nature mixers."
       />
-      <FocusBoard tasks={tasks} />
+      <FocusBoard tasks={tasks} highlightTaskId={task} />
     </div>
   );
 }

@@ -18,7 +18,13 @@ import { CopilotPanel } from "@/components/workspace/copilot-panel";
 import { APP_NAV } from "@/components/workspace/nav";
 import { useWorkspaceState } from "@/components/workspace/workspace-state";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { signOutAction } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 import type { CopilotMessage } from "@/lib/db/schema";
@@ -178,7 +184,10 @@ export function WorkspaceShell({
       </div>
       <Sheet open={dumpOpen} onOpenChange={setDumpOpen}>
         <SheetContent side="right" className="w-full overflow-auto p-4 sm:max-w-md">
-          <p className="mb-3 text-sm font-semibold">Dump · Ctrl+N</p>
+          <SheetTitle className="mb-1">Dump</SheetTitle>
+          <SheetDescription className="mb-3">
+            Get the thought out. Ctrl+N
+          </SheetDescription>
           <QuickDump compact subjects={dumpSubjects} autoFocus={dumpOpen} />
         </SheetContent>
       </Sheet>

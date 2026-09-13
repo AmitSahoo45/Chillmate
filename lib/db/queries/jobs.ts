@@ -112,6 +112,7 @@ export async function updateJob(
     status?: JobStatus;
     campus?: Campus;
     pinnedAt?: Date | null;
+    lastFollowedUpAt?: Date | null;
   },
 ) {
   const [row] = await db
@@ -135,7 +136,7 @@ export async function nudgeJob(userId: string, id: string) {
   if (!existing) return null;
   const status: JobStatus =
     existing.status === "wishlist" ? "applied" : existing.status;
-  return updateJob(userId, id, { dateApplied: new Date(), status });
+  return updateJob(userId, id, { status, lastFollowedUpAt: new Date() });
 }
 
 export async function setJobPinned(userId: string, id: string, pinned: boolean) {

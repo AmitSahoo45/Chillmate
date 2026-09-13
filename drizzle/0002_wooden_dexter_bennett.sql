@@ -1,0 +1,1 @@
+ALTER TABLE "job_applications" ADD COLUMN "last_followed_up_at" timestamp;

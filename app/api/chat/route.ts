@@ -14,6 +14,7 @@ import { auth } from "@/auth";
 import {
   appendMessages,
   countRecentUserChats,
+  listModelContext,
 } from "@/lib/db/queries/copilot";
 import {
   createErrorSheet,
@@ -38,13 +39,13 @@ import {
   listSubjects,
 } from "@/lib/db/queries/subjects";
 import { createTask, listTasks, toggleTask } from "@/lib/db/queries/tasks";
+import type { CopilotMessage } from "@/lib/db/schema";
 import { tryParseDateOnly } from "@/lib/date";
 import { isGeminiConfigured } from "@/lib/env";
 import { AMBIENT_TRACK_IDS } from "@/lib/focus/tracks";
 import {
   CHAT_BODY_MAX,
   CHAT_MAX_OUTPUT_TOKENS,
-  CHAT_MESSAGES_MAX,
   CHAT_RATE_PER_MIN,
   CHAT_USER_TEXT_MAX,
   FIELD,
@@ -52,7 +53,7 @@ import {
   POMODORO_MIN,
   clip,
 } from "@/lib/limits";
-import { noteTitle } from "@/lib/notes/title";
+import { notePreview, noteTitle } from "@/lib/notes/title";
 import { allowRequest } from "@/lib/rate-limit";
 import { parseTags } from "@/lib/tags";
 import { parseHttpUrl } from "@/lib/validation";
@@ -65,6 +66,14 @@ function textFrom(message: UIMessage) {
     .filter((part) => part.type === "text")
     .map((part) => ("text" in part ? part.text : ""))
     .join("\n");
+}
+
+function rowsToUi(rows: CopilotMessage[]): UIMessage[] {
+  return rows.map((row) => ({
+    id: row.id,
+    role: row.role === "user" ? "user" : row.role === "system" ? "system" : "assistant",
+    parts: [{ type: "text" as const, text: row.content }],
+  }));
 }
 
 export const TOOL_TRACE_PREFIX = "[tool-activity]";
@@ -117,18 +126,19 @@ export async function POST(req: Request) {
   } catch {
     return new Response("Invalid JSON", { status: 400 });
   }
-  if (
-    typeof parsed !== "object" ||
-    parsed === null ||
-    !Array.isArray((parsed as { messages?: unknown }).messages)
-  ) {
+  if (typeof parsed !== "object" || parsed === null) {
     return new Response("Invalid body", { status: 400 });
   }
-  const messages = (parsed as { messages: UIMessage[] }).messages.slice(
-    -CHAT_MESSAGES_MAX,
-  );
-  const lastUser = [...messages].reverse().find((message) => message.role === "user");
-  const userText = lastUser ? textFrom(lastUser) : "";
+  const body = parsed as { message?: UIMessage; messages?: UIMessage[] };
+  const lastUser = body.message
+    ? body.message
+    : Array.isArray(body.messages)
+      ? [...body.messages].reverse().find((message) => message.role === "user")
+      : undefined;
+  if (!lastUser || lastUser.role !== "user") {
+    return new Response("Invalid body", { status: 400 });
+  }
+  const userText = textFrom(lastUser);
   if (userText.length > CHAT_USER_TEXT_MAX) {
     return new Response("Message too long", { status: 400 });
   }
@@ -139,6 +149,9 @@ export async function POST(req: Request) {
   if (recent >= CHAT_RATE_PER_MIN) {
     return new Response("Too many requests", { status: 429 });
   }
+
+  const history = await listModelContext(userId);
+  const messages = [...rowsToUi(history), lastUser];
 
   const result = streamText({
     model: google("gemini-3.6-flash"),
@@ -151,7 +164,14 @@ export async function POST(req: Request) {
       listSubjects: tool({
         description: "List the user's note subjects",
         inputSchema: z.object({ query: z.string().max(FIELD.query).optional() }),
-        execute: async ({ query }) => listSubjects(userId, query ?? ""),
+        execute: async ({ query }) => {
+          const rows = await listSubjects(userId, query ?? "");
+          return rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            preview: notePreview(row.description, 120),
+          }));
+        },
       }),
       createSubject: tool({
         description: "Create a subject",
@@ -174,8 +194,15 @@ export async function POST(req: Request) {
           query: z.string().max(FIELD.query).optional(),
         }),
         execute: async ({ subjectId, query }) => {
-          if (subjectId) return listNotes(userId, subjectId, query ?? "");
-          return listAllNotes(userId, query ?? "");
+          const rows = subjectId
+            ? await listNotes(userId, subjectId, query ?? "")
+            : await listAllNotes(userId, query ?? "");
+          return rows.map((row) => ({
+            id: row.id,
+            subjectId: row.subjectId,
+            title: row.title,
+            preview: notePreview(row.bodyMarkdown, 180),
+          }));
         },
       }),
       createNote: tool({
@@ -224,7 +251,16 @@ export async function POST(req: Request) {
       listErrorSheets: tool({
         description: "List interview error sheets",
         inputSchema: z.object({ query: z.string().max(FIELD.query).optional() }),
-        execute: async ({ query }) => listErrorSheets(userId, { query }),
+        execute: async ({ query }) => {
+          const rows = await listErrorSheets(userId, { query });
+          return rows.map((row) => ({
+            id: row.id,
+            probName: row.probName,
+            priority: row.revisionPriority,
+            corrected: row.isMistakeCorrected,
+            preview: notePreview(row.mistake, 180),
+          }));
+        },
       }),
       createErrorSheet: tool({
         description: "Create an interview error sheet",
@@ -254,7 +290,15 @@ export async function POST(req: Request) {
       listJobs: tool({
         description: "List job applications",
         inputSchema: z.object({ query: z.string().max(FIELD.query).optional() }),
-        execute: async ({ query }) => listJobs(userId, { query, status: "all" }),
+        execute: async ({ query }) => {
+          const rows = await listJobs(userId, { query, status: "all" });
+          return rows.map((row) => ({
+            id: row.id,
+            company: row.company,
+            position: row.position,
+            status: row.status,
+          }));
+        },
       }),
       createJob: tool({
         description: "Create a job application",
@@ -310,7 +354,14 @@ export async function POST(req: Request) {
       listTasks: tool({
         description: "List focus tasks",
         inputSchema: z.object({}),
-        execute: async () => listTasks(userId),
+        execute: async () => {
+          const rows = await listTasks(userId);
+          return rows.map((row) => ({
+            id: row.id,
+            text: row.text,
+            completed: row.completed,
+          }));
+        },
       }),
       createTask: tool({
         description: "Create a focus task",

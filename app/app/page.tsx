@@ -38,6 +38,30 @@ export default async function HomePage() {
     <div className="space-y-8">
       <PageHeader eyebrow="Home" title="Workspace" />
       <QuickDump hero templates={false} subjects={subjects} />
+      {nextTask ? (
+        <Card className="border-l-4 border-l-theme-orange">
+          <CardHeader>
+            <CardTitle>Next</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="font-medium">{nextTask.text}</p>
+            {last ? (
+              <Link
+                href={`/app/notes/${last.subjectId}/${last.id}`}
+                className="block underline"
+              >
+                Related note: {last.title}
+              </Link>
+            ) : null}
+            <Link
+              href={`/app/focus?task=${nextTask.id}`}
+              className="inline-block underline"
+            >
+              Start focus
+            </Link>
+          </CardContent>
+        </Card>
+      ) : null}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {last ? (
           <Link
@@ -48,7 +72,7 @@ export default async function HomePage() {
           </Link>
         ) : null}
         {nextTask ? (
-          <Link href="/app/focus" className="underline">
+          <Link href={`/app/focus?task=${nextTask.id}`} className="underline">
             Next: {nextTask.text}
           </Link>
         ) : (
@@ -103,9 +127,13 @@ export default async function HomePage() {
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Jobs</p>
               {pinnedJobs.map((job) => (
-                <p key={job.id}>
+                <Link
+                  key={job.id}
+                  href="/app/jobs"
+                  className="block hover:underline"
+                >
                   {job.company} — {job.position}
-                </p>
+                </Link>
               ))}
             </div>
           </CardContent>
@@ -120,7 +148,15 @@ export default async function HomePage() {
             {tasks.length === 0 ? (
               <p className="text-muted-foreground">No open tasks.</p>
             ) : (
-              tasks.map((task) => <p key={task.id}>{task.text}</p>)
+              tasks.map((task) => (
+                <Link
+                  key={task.id}
+                  href={`/app/focus?task=${task.id}`}
+                  className="block hover:underline"
+                >
+                  {task.text}
+                </Link>
+              ))
             )}
           </CardContent>
         </Card>
@@ -153,9 +189,13 @@ export default async function HomePage() {
               <p className="text-muted-foreground">Nothing in applied / review / interview.</p>
             ) : (
               jobs.map((job) => (
-                <p key={job.id}>
+                <Link
+                  key={job.id}
+                  href="/app/jobs"
+                  className="block hover:underline"
+                >
                   {job.company} — {job.position} ({job.status})
-                </p>
+                </Link>
               ))
             )}
           </CardContent>

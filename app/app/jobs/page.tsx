@@ -145,7 +145,7 @@ export default async function JobsPage({
                 <div className="flex flex-wrap gap-2">
                   <form action={nudgeJobAction.bind(null, job.id)}>
                     <PendingSubmit
-                      label="Nudge"
+                      label="Record follow-up"
                       pendingLabel="Saving…"
                       size="sm"
                     />

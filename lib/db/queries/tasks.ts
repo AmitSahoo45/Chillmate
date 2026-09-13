@@ -59,15 +59,25 @@ export async function splitTask(
   id: string,
   parts: [string, string],
 ) {
-  const existing = await getTask(userId, id);
-  if (!existing) return null;
   const first = parts[0].trim();
   const second = parts[1].trim();
   if (!first || !second) return null;
-  await deleteTask(userId, id);
-  const a = await createTask(userId, first);
-  const b = await createTask(userId, second);
-  return [a, b];
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+      .limit(1);
+    if (!existing) return null;
+    const [removed] = await tx
+      .delete(tasks)
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
+      .returning({ id: tasks.id });
+    if (!removed) return null;
+    const [a] = await tx.insert(tasks).values({ userId, text: first }).returning();
+    const [b] = await tx.insert(tasks).values({ userId, text: second }).returning();
+    return [a, b];
+  });
 }
 
 export async function deleteTask(userId: string, id: string) {

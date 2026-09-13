@@ -63,17 +63,27 @@ export async function listThreadMessages(userId: string) {
   return { thread, messages };
 }
 
+export async function listModelContext(userId: string) {
+  const { messages } = await listThreadMessages(userId);
+  const [first, ...rest] = messages;
+  const summary = first && isSummaryRow(first) ? first : null;
+  const tail = (summary ? rest : messages).slice(-KEEP_RECENT);
+  return summary ? [summary, ...tail] : tail;
+}
+
 export async function appendMessages(
   userId: string,
   items: Array<{ role: string; content: string }>,
 ) {
   const thread = await getOrCreateThread(userId);
   if (items.length === 0) return;
+  const now = Date.now();
   await db.insert(copilotMessages).values(
-    items.map((item) => ({
+    items.map((item, index) => ({
       threadId: thread.id,
       role: item.role,
       content: item.content,
+      createdAt: new Date(now + index),
     })),
   );
   await compactThread(thread.id);

@@ -50,7 +50,13 @@ function minutesField(raw: FormDataEntryValue | null, currentSeconds: number) {
   return Math.max(1, Math.min(90, Math.round(parsed)));
 }
 
-export function FocusBoard({ tasks }: { tasks: Task[] }) {
+export function FocusBoard({
+  tasks,
+  highlightTaskId,
+}: {
+  tasks: Task[];
+  highlightTaskId?: string;
+}) {
   const {
     mode,
     remaining,
@@ -166,7 +172,14 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
           </form>
           <ul className="mt-3 space-y-2">
             {tasks.map((task) => (
-              <li key={task.id} className="flex flex-wrap items-center gap-2 text-sm">
+              <li
+                key={task.id}
+                className={cn(
+                  "flex flex-wrap items-center gap-2 text-sm",
+                  highlightTaskId === task.id &&
+                    "rounded-md border border-theme-orange px-2 py-1",
+                )}
+              >
                 <form action={toggleTaskAction.bind(null, task.id)}>
                   <Button type="submit" size="xs">
                     {task.completed ? "Undo" : "Done"}
@@ -223,6 +236,13 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
                       size="xs"
                       variant="outline"
                       className="shrink-0"
+                      aria-label={
+                        state.playing
+                          ? `Pause ${track.label}`
+                          : state.failed
+                            ? `Retry ${track.label}`
+                            : `Play ${track.label}`
+                      }
                       onClick={() => toggleTrack(track.id)}
                     >
                       {state.playing ? "Pause" : state.failed ? "Retry" : "Play"}
@@ -233,6 +253,7 @@ export function FocusBoard({ tasks }: { tasks: Task[] }) {
                     min={0}
                     max={100}
                     value={state.volume}
+                    aria-label={`${track.label} volume`}
                     onChange={(event) =>
                       setTrackVolume(track.id, Number(event.currentTarget.value))
                     }

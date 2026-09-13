@@ -184,6 +184,7 @@ export const jobApplications = pgTable(
     company: text("company").notNull(),
     position: text("position").notNull(),
     dateApplied: timestamp("date_applied", { mode: "date" }).notNull(),
+    lastFollowedUpAt: timestamp("last_followed_up_at", { mode: "date" }),
     status: jobStatusEnum("status").notNull(),
     campus: campusEnum("campus").notNull().default("oncampus"),
     pinnedAt: timestamp("pinned_at", { mode: "date" }),

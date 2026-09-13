@@ -116,6 +116,7 @@ function loadTimer() {
     period?: number;
     durations?: WorkspaceStateValue["durations"];
     savedAt?: number;
+    endsAt?: number | null;
   } | null;
   const durations = saved?.durations
     ? {
@@ -134,18 +135,26 @@ function loadTimer() {
       ? saved.remaining
       : durationFor(mode, durations);
   const paused = saved?.isPaused !== false;
-  if (!paused && typeof saved?.savedAt === "number") {
-    const left = baseRemaining - Math.floor((Date.now() - saved.savedAt) / 1000);
-    if (left > 0) {
-      return { mode, remaining: left, isPaused: false, period, durations };
+  if (!paused) {
+    const endsAt =
+      typeof saved?.endsAt === "number"
+        ? saved.endsAt
+        : typeof saved?.savedAt === "number"
+          ? saved.savedAt + baseRemaining * 1000
+          : null;
+    if (endsAt) {
+      const left = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+      if (left > 0) {
+        return { mode, remaining: left, isPaused: false, period, durations };
+      }
+      return {
+        mode,
+        remaining: durationFor(mode, durations),
+        isPaused: true,
+        period,
+        durations,
+      };
     }
-    return {
-      mode,
-      remaining: durationFor(mode, durations),
-      isPaused: true,
-      period,
-      durations,
-    };
   }
   return { mode, remaining: baseRemaining, isPaused: true, period, durations };
 }
@@ -189,6 +198,7 @@ export function WorkspaceStateProvider({
   const modeRef = useRef(mode);
   const durationsRef = useRef(durations);
   const isPausedRef = useRef(isPaused);
+  const endsAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     remainingRef.current = remaining;
@@ -206,6 +216,7 @@ export function WorkspaceStateProvider({
       isPaused,
       period,
       durations,
+      endsAt: isPaused ? null : (endsAtRef.current ?? Date.now() + remainingRef.current * 1000),
       savedAt: Date.now(),
     });
   }, [mode, isPaused, period, durations]);
@@ -218,6 +229,9 @@ export function WorkspaceStateProvider({
         isPaused: isPausedRef.current,
         period: periodRef.current,
         durations: durationsRef.current,
+        endsAt: isPausedRef.current
+          ? null
+          : (endsAtRef.current ?? Date.now() + remainingRef.current * 1000),
         savedAt: Date.now(),
       });
     };
@@ -275,6 +289,7 @@ export function WorkspaceStateProvider({
       const nextRemaining = durationFor(next, durations);
       remainingRef.current = nextRemaining;
       setRemaining(nextRemaining);
+      endsAtRef.current = null;
       setIsPaused(true);
     },
     [durations],
@@ -291,6 +306,7 @@ export function WorkspaceStateProvider({
       const nextRemaining = durationFor(mode, safe);
       remainingRef.current = nextRemaining;
       setRemaining(nextRemaining);
+      endsAtRef.current = null;
       setIsPaused(true);
     },
     [mode],
@@ -303,18 +319,30 @@ export function WorkspaceStateProvider({
     setModeState("pomodoro");
     remainingRef.current = nextSeconds;
     setRemaining(nextSeconds);
+    endsAtRef.current = null;
     setIsPaused(true);
   }, []);
 
   useEffect(() => {
-    if (isPaused) return;
-    const timer = window.setInterval(() => {
-      if (remainingRef.current > 1) {
-        remainingRef.current -= 1;
-        setRemaining(remainingRef.current);
-        if (remainingRef.current % 60 === 0) {
-          setMinutePulse(true);
-          window.setTimeout(() => setMinutePulse(false), 400);
+    if (isPaused) {
+      endsAtRef.current = null;
+      return;
+    }
+    if (endsAtRef.current == null) {
+      endsAtRef.current = Date.now() + remainingRef.current * 1000;
+    }
+    const tick = () => {
+      const endsAt = endsAtRef.current;
+      if (endsAt == null) return;
+      const left = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+      if (left > 0) {
+        if (left !== remainingRef.current) {
+          if (left % 60 === 0 && remainingRef.current > left) {
+            setMinutePulse(true);
+            window.setTimeout(() => setMinutePulse(false), 400);
+          }
+          remainingRef.current = left;
+          setRemaining(left);
         }
         return;
       }
@@ -332,12 +360,34 @@ export function WorkspaceStateProvider({
       const nextRemaining = durationFor(nextMode, durationsRef.current);
       remainingRef.current = nextRemaining;
       setRemaining(nextRemaining);
-    }, 1000);
-    return () => window.clearInterval(timer);
+      endsAtRef.current = Date.now() + nextRemaining * 1000;
+    };
+    tick();
+    const timer = window.setInterval(tick, 250);
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [isPaused]);
 
   const togglePause = useCallback(() => {
-    setIsPaused((prev) => !prev);
+    setIsPaused((prev) => {
+      if (prev) {
+        endsAtRef.current = Date.now() + remainingRef.current * 1000;
+      } else {
+        const left = endsAtRef.current
+          ? Math.max(0, Math.round((endsAtRef.current - Date.now()) / 1000))
+          : remainingRef.current;
+        remainingRef.current = left;
+        setRemaining(left);
+        endsAtRef.current = null;
+      }
+      return !prev;
+    });
   }, []);
 
   const setVisualTick = useCallback((on: boolean) => {
@@ -407,7 +457,8 @@ export function WorkspaceStateProvider({
           next[track.id] = {
             ...next[track.id],
             volume: volume ?? next[track.id].volume,
-            playing: volume !== undefined && !next[track.id].failed,
+            failed: volume !== undefined ? false : next[track.id].failed,
+            playing: volume !== undefined,
           };
         }
         return next;

@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useMemo, useState } from "react";
-import type { UIMessage } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 
 import {
   AlertDialog,
@@ -91,8 +91,21 @@ function CopilotChat({
   const [timerProposal, setTimerProposal] = useState<number | null>(null);
   const { setPomodoroMinutes, toggleTrack, tracks } = useWorkspaceState();
   const seed = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        prepareSendMessagesRequest: ({ messages: pending }) => ({
+          body: {
+            message: pending[pending.length - 1],
+          },
+        }),
+      }),
+    [],
+  );
   const { messages, sendMessage, status } = useChat({
     messages: seed,
+    transport,
     onToolCall: ({ toolCall }) => {
       if (toolCall.toolName === "setPomodoroMinutes") {
         const minutes = Number(

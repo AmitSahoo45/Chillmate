@@ -160,16 +160,26 @@ export function NoteEditor({
     return looksLikeDraft(raw) ? raw : null;
   });
   const [draftTime, setDraftTime] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
   const formRef = useRef<HTMLFormElement>(null);
+  const serverSnap = snapshotOf({
+    title: defaults?.title ?? "",
+    description: defaults?.description ?? "",
+    tags: defaults ? formatTags(defaults.tags) : "",
+    body: defaults?.bodyMarkdown ?? "",
+  });
 
-  // Server saved (savedKey changed) → re-baseline to what is on screen.
-  // Storage cleanup happens in the reconciling effect below.
   const [prevSavedKey, setPrevSavedKey] = useState(savedKey);
   if (prevSavedKey !== savedKey) {
     setPrevSavedKey(savedKey);
-    setBaseline(snapshotOf({ title, description, tags, body }));
-    setPendingDraft(null);
-    setDraftTime(null);
+    setBaseline(serverSnap);
+    setSaveState("saved");
+    if (pendingDraft === serverSnap) {
+      setPendingDraft(null);
+      setDraftTime(null);
+    }
   }
 
   // Reconcile localStorage with the baseline (debounced), and flush on
@@ -254,11 +264,18 @@ export function NoteEditor({
   }
 
   async function handleSubmit(formData: FormData) {
-    // The server re-baselines via savedKey on success; drop the draft now so
-    // a redirect (or stale tab) never resurrects pre-save text. If validation
-    // fails, the fields keep their values and typing re-saves the draft.
-    removeStored(storageKey);
-    await action(formData);
+    setSaveState("saving");
+    try {
+      await action(formData);
+    } catch (error) {
+      const digest =
+        typeof error === "object" && error && "digest" in error
+          ? String((error as { digest?: unknown }).digest)
+          : "";
+      if (digest.startsWith("NEXT_REDIRECT")) throw error;
+      setSaveState("error");
+      return;
+    }
   }
 
   return (
@@ -364,11 +381,17 @@ export function NoteEditor({
       <div className="flex items-center gap-3">
         <PendingSubmit label={submitLabel} />
         <span className="text-sm text-muted-foreground" aria-live="polite">
-          {dirty
-            ? "Unsaved — Ctrl+S"
-            : draftTime
-              ? `Draft kept ${draftTime}`
-              : ""}
+          {saveState === "saving"
+            ? "Saving…"
+            : saveState === "error"
+              ? "Couldn't save—draft retained"
+              : dirty
+                ? draftTime
+                  ? `Draft saved on this device · ${draftTime}`
+                  : "Unsaved — Ctrl+S"
+                : saveState === "saved"
+                  ? "Saved"
+                  : ""}
         </span>
       </div>
       {zen ? null : (

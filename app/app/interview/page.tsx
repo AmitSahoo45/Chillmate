@@ -186,6 +186,14 @@ export default async function InterviewPage({
                     </HttpLink>
                   ) : null}
                   <div className="flex flex-wrap gap-2">
+                    {!sheet.isMistakeCorrected ? (
+                      <Link
+                        href={`/app/interview/${sheet.id}`}
+                        className="text-sm underline"
+                      >
+                        Try again
+                      </Link>
+                    ) : null}
                     <PinForm
                       pinned={Boolean(sheet.pinnedAt)}
                       action={pinErrorSheetAction.bind(null, sheet.id)}
