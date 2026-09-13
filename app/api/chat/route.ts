@@ -60,6 +60,7 @@ import { parseHttpUrl } from "@/lib/validation";
 export const dynamic = "force-dynamic";
 
 function textFrom(message: UIMessage) {
+  if (!Array.isArray(message.parts)) return "";
   return message.parts
     .filter((part) => part.type === "text")
     .map((part) => ("text" in part ? part.text : ""))
@@ -140,7 +141,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: google("gemini-2.5-flash"),
+    model: google("gemini-3.6-flash"),
     maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
     system:
       "You are Chillmate copilot inside a private study/job workspace. Use tools to read and write the user's notes, interview sheets, jobs, and tasks. Never delete anything yourself — call proposeDelete and wait for UI confirmation. Never move notes yourself — call proposeMove and wait for UI confirmation. If the user asks to triage Inbox, list Inbox notes and proposeMove each to a fitting subject. If they ask to quiz on interview mistakes, listErrorSheets and quiz on uncorrected high-priority items one at a time. If they ask what to do for 15 minutes, use listTasks and uncorrected error sheets and pick one small action. You may call playAmbient or setPomodoroMinutes for Focus controls.",

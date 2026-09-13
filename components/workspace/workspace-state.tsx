@@ -10,12 +10,17 @@ import {
   useState,
 } from "react";
 
-import { SOUND_PRESETS } from "@/lib/focus/presets";
 import {
-  AMBIENT_TRACKS,
-  getAmbientTrackSrc,
-  type AmbientTrackId,
-} from "@/lib/focus/tracks";
+  getAmbientAudio,
+  isAmbientPlaying,
+  pauseAllAmbient,
+  pauseAmbient,
+  resumePlayingAmbient,
+  setAmbientFailHandler,
+  setAmbientVolume,
+} from "@/lib/focus/ambient-player";
+import { SOUND_PRESETS } from "@/lib/focus/presets";
+import { AMBIENT_TRACKS, type AmbientTrackId } from "@/lib/focus/tracks";
 
 type Mode = "pomodoro" | "short" | "long";
 
@@ -148,12 +153,15 @@ function loadTimer() {
 function loadTracks() {
   if (typeof window === "undefined") return initialTracks;
   const mix = readJson(MIX_KEY) as Record<string, { volume?: number }> | null;
-  if (!mix) return initialTracks;
   const next = { ...initialTracks };
   for (const track of AMBIENT_TRACKS) {
-    const item = mix[track.id];
-    if (!item || typeof item.volume !== "number") continue;
-    next[track.id] = { ...next[track.id], volume: item.volume };
+    const item = mix?.[track.id];
+    next[track.id] = {
+      failed: false,
+      volume:
+        item && typeof item.volume === "number" ? item.volume : next[track.id].volume,
+      playing: isAmbientPlaying(track.id),
+    };
   }
   return next;
 }
@@ -175,7 +183,7 @@ export function WorkspaceStateProvider({
     () => typeof window !== "undefined" && window.localStorage.getItem(TICK_KEY) === "1",
   );
   const [minutePulse, setMinutePulse] = useState(false);
-  const audioRefs = useRef<Partial<Record<AmbientTrackId, HTMLAudioElement>>>({});
+  const tracksRef = useRef(tracks);
   const periodRef = useRef(period);
   const remainingRef = useRef(remaining);
   const modeRef = useRef(mode);
@@ -188,7 +196,8 @@ export function WorkspaceStateProvider({
     durationsRef.current = durations;
     isPausedRef.current = isPaused;
     periodRef.current = period;
-  }, [remaining, mode, durations, isPaused, period]);
+    tracksRef.current = tracks;
+  }, [remaining, mode, durations, isPaused, period, tracks]);
 
   useEffect(() => {
     writeJson(TIMER_KEY, {
@@ -236,11 +245,27 @@ export function WorkspaceStateProvider({
   }, [tracks]);
 
   useEffect(() => {
-    const nodes = audioRefs.current;
+    setAmbientFailHandler((id) => {
+      setTracks((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], failed: true, playing: false },
+      }));
+    });
+    const resume = () => {
+      if (document.visibilityState !== "visible") return;
+      const current = tracksRef.current;
+      resumePlayingAmbient(
+        Object.fromEntries(
+          AMBIENT_TRACKS.filter((track) => current[track.id].playing && !current[track.id].failed).map(
+            (track) => [track.id, { volume: current[track.id].volume }],
+          ),
+        ),
+      );
+    };
+    document.addEventListener("visibilitychange", resume);
     return () => {
-      for (const audio of Object.values(nodes)) {
-        audio?.pause();
-      }
+      setAmbientFailHandler(null);
+      document.removeEventListener("visibilitychange", resume);
     };
   }, []);
 
@@ -324,39 +349,18 @@ export function WorkspaceStateProvider({
     }
   }, []);
 
-  const ensureAudio = useCallback((id: AmbientTrackId, volume: number) => {
-    const existing = audioRefs.current[id];
-    if (existing) {
-      if (existing.error) existing.load();
-      return existing;
-    }
-    const audio = new Audio(getAmbientTrackSrc(id));
-    audio.loop = true;
-    audio.preload = "none";
-    audio.volume = volume / 100;
-    audio.addEventListener("error", () => {
-      setTracks((prev) => ({
-        ...prev,
-        [id]: { ...prev[id], failed: true, playing: false },
-      }));
-    });
-    audioRefs.current[id] = audio;
-    return audio;
-  }, []);
-
   const toggleTrack = useCallback(
     (id: AmbientTrackId) => {
       const current = tracks[id];
       if (current.playing) {
-        audioRefs.current[id]?.pause();
+        pauseAmbient(id);
         setTracks((prev) => ({
           ...prev,
           [id]: { ...prev[id], playing: false },
         }));
         return;
       }
-      const audio = ensureAudio(id, current.volume);
-      audio.volume = current.volume / 100;
+      const audio = getAmbientAudio(id, current.volume);
       setTracks((prev) => ({
         ...prev,
         [id]: { ...prev[id], failed: false, playing: true },
@@ -368,12 +372,11 @@ export function WorkspaceStateProvider({
         }));
       });
     },
-    [ensureAudio, tracks],
+    [tracks],
   );
 
   const setTrackVolume = useCallback((id: AmbientTrackId, volume: number) => {
-    const audio = audioRefs.current[id];
-    if (audio) audio.volume = volume / 100;
+    setAmbientVolume(id, volume);
     setTracks((prev) => ({
       ...prev,
       [id]: { ...prev[id], volume },
@@ -381,24 +384,11 @@ export function WorkspaceStateProvider({
   }, []);
 
   const pauseAllAudio = useCallback(() => {
-    const ids = Object.keys(audioRefs.current) as AmbientTrackId[];
-    for (const audio of Object.values(audioRefs.current)) {
-      audio?.pause();
-    }
-    if (ids.length === 0) {
-      setTracks((prev) => {
-        const next = { ...prev };
-        for (const track of AMBIENT_TRACKS) {
-          next[track.id] = { ...next[track.id], playing: false };
-        }
-        return next;
-      });
-      return;
-    }
+    pauseAllAmbient();
     setTracks((prev) => {
       const next = { ...prev };
-      for (const id of AMBIENT_TRACKS.map((track) => track.id)) {
-        next[id] = { ...next[id], playing: false };
+      for (const track of AMBIENT_TRACKS) {
+        next[track.id] = { ...next[track.id], playing: false };
       }
       return next;
     });
@@ -423,8 +413,7 @@ export function WorkspaceStateProvider({
         return next;
       });
       for (const item of preset.tracks) {
-        const audio = ensureAudio(item.id, item.volume);
-        audio.volume = item.volume / 100;
+        const audio = getAmbientAudio(item.id, item.volume);
         void audio.play().catch(() => {
           setTracks((now) => ({
             ...now,
@@ -433,7 +422,7 @@ export function WorkspaceStateProvider({
         });
       }
     },
-    [ensureAudio, pauseAllAudio],
+    [pauseAllAudio],
   );
 
   const value = useMemo(
