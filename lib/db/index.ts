@@ -4,6 +4,7 @@ import postgres from "postgres";
 import * as schema from "./schema";
 
 export type ChillmateDb = PostgresJsDatabase<typeof schema>;
+export type CopilotDatabase = Pick<ChillmateDb, "select" | "insert" | "update">;
 
 const globalForDb = globalThis as unknown as {
   postgres: ReturnType<typeof postgres> | undefined;

@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, ilike, isNotNull, isNull, or, sql } from "drizzle-orm";
 
-import { db } from "@/lib/db";
+import { db, type CopilotDatabase } from "@/lib/db";
 import { notes, subjects } from "@/lib/db/schema";
 import { LIST_LIMIT, searchPattern } from "@/lib/limits";
 import { isInboxName } from "@/lib/notes/title";
@@ -122,15 +122,17 @@ export async function createNote(
     description: string;
     bodyMarkdown?: string;
     tags: string[];
+    isDump?: boolean;
   },
+  database: CopilotDatabase = db,
 ) {
-  const [subject] = await db
+  const [subject] = await database
     .select({ id: subjects.id })
     .from(subjects)
     .where(and(eq(subjects.id, data.subjectId), eq(subjects.userId, userId)))
     .limit(1);
   if (!subject) return null;
-  const [row] = await db
+  const [row] = await database
     .insert(notes)
     .values({
       userId,
@@ -139,6 +141,7 @@ export async function createNote(
       description: data.description,
       bodyMarkdown: data.bodyMarkdown ?? "",
       tags: data.tags,
+      isDump: data.isDump ?? false,
     })
     .returning();
   return row;

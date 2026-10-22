@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 
-import { db } from "@/lib/db";
+import { db, type CopilotDatabase } from "@/lib/db";
 import { tasks } from "@/lib/db/schema";
 import { LIST_LIMIT } from "@/lib/limits";
 
@@ -31,8 +31,8 @@ export async function getTask(userId: string, id: string) {
   return row ?? null;
 }
 
-export async function createTask(userId: string, text: string) {
-  const [row] = await db
+export async function createTask(userId: string, text: string, database: CopilotDatabase = db) {
+  const [row] = await database
     .insert(tasks)
     .values({ userId, text })
     .returning();

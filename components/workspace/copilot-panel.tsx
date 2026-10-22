@@ -105,7 +105,7 @@ function CopilotChat({
       }),
     [],
   );
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     messages: seed,
     transport,
     onToolCall: ({ toolCall }) => {
@@ -131,6 +131,7 @@ function CopilotChat({
     },
   });
 
+  const sending = status === "submitted" || status === "streaming";
   const proposal = useMemo(() => {
     for (const message of messages) {
       for (const part of message.parts) {
@@ -233,11 +234,12 @@ function CopilotChat({
           </div>
         ))}
       </div>
+      {error ? <p role="alert" className="px-4 py-2 text-sm text-destructive">{error.message}</p> : null}
       <form
         className="border-t border-border p-3"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!input.trim() || !anthropicReady) return;
+          if (!input.trim() || !anthropicReady || sending) return;
           void sendMessage({ text: input });
           setInput("");
         }}
@@ -250,12 +252,12 @@ function CopilotChat({
             }
             maxLength={CHAT_USER_TEXT_MAX}
             placeholder={anthropicReady ? "Ask Chillmate…" : "Anthropic key missing"}
-            disabled={!anthropicReady || status === "streaming"}
+            disabled={!anthropicReady || sending}
           />
           <Button
             type="submit"
             size="sm"
-            disabled={!anthropicReady || status === "streaming" || !input.trim()}
+            disabled={!anthropicReady || sending || !input.trim()}
           >
             Send
           </Button>

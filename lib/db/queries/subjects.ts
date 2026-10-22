@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
-import { db } from "@/lib/db";
+import { db, type CopilotDatabase } from "@/lib/db";
 import { notes, subjects } from "@/lib/db/schema";
 import { LIST_LIMIT, searchPattern } from "@/lib/limits";
 import { INBOX_NAME, isInboxName } from "@/lib/notes/title";
@@ -52,8 +52,9 @@ export async function getOrCreateInbox(userId: string) {
 export async function createSubject(
   userId: string,
   data: { name: string; description: string; tags: string[] },
+  database: CopilotDatabase = db,
 ) {
-  const [row] = await db
+  const [row] = await database
     .insert(subjects)
     .values({
       userId,

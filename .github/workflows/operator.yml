@@ -1,0 +1,56 @@
+name: Chillmate operator
+
+on:
+  schedule:
+    - cron: '0 18 * * *' # 23:30 Asia/Kolkata
+    - cron: '0 1 * * *' # 06:30 Asia/Kolkata
+  workflow_dispatch:
+    inputs:
+      run:
+        description: Operator run
+        required: true
+        type: choice
+        options:
+          - night
+          - morning
+
+permissions: {}
+
+concurrency:
+  group: operator-${{ github.event.schedule || inputs.run }}
+  cancel-in-progress: false
+
+jobs:
+  operate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      OPERATOR_SECRET: ${{ secrets.OPERATOR_SECRET }}
+      OPERATOR_URL: https://chillmate.vercel.app/api/operator
+      REQUESTED_RUN: ${{ inputs.run }}
+      SCHEDULE: ${{ github.event.schedule }}
+    steps:
+      - name: Run operator
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$OPERATOR_SECRET" ]]; then
+            echo "Configure the repository secret OPERATOR_SECRET."
+            exit 1
+          fi
+          case "$SCHEDULE" in
+            '0 18 * * *') run=night ;;
+            '0 1 * * *') run=morning ;;
+            '') run="$REQUESTED_RUN" ;;
+            *) echo "Unexpected schedule"; exit 1 ;;
+          esac
+          case "$run" in night|morning) ;; *) echo "Invalid run"; exit 1 ;; esac
+          umask 077
+          header_file="$RUNNER_TEMP/chillmate-operator-header"
+          trap 'rm -f "$header_file"' EXIT
+          printf 'x-secret: %s\n' "$OPERATOR_SECRET" > "$header_file"
+          curl --silent --show-error --fail-with-body \
+            --connect-timeout 15 --max-time 300 \
+            --retry 1 --retry-delay 15 --retry-all-errors \
+            --request POST --header "@$header_file" \
+            "$OPERATOR_URL?run=$run"

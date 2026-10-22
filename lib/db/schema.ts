@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
   integer,
   pgEnum,
@@ -132,6 +133,7 @@ export const notes = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     bodyMarkdown: text("body_markdown").notNull().default(""),
+    isDump: boolean("is_dump").notNull().default(false),
     tags: text("tags")
       .array()
       .notNull()
@@ -202,6 +204,7 @@ export const tasks = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     text: text("text").notNull(),
     completed: boolean("completed").notNull().default(false),
+    dueDate: date("due_date", { mode: "string" }),
     ...timestamps,
   },
   (t) => [index("tasks_user_id_idx").on(t.userId)],
@@ -220,6 +223,23 @@ export const copilotThreads = pgTable(
     unique("copilot_threads_user_id_unique").on(t.userId),
     index("copilot_threads_user_id_idx").on(t.userId),
   ],
+);
+
+export const operatorRunKindEnum = pgEnum("operator_run_kind", ["night", "morning"]);
+
+/** Rows are committed only with the complete output of a successful run. */
+export const operatorRuns = pgTable(
+  "operator_runs",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: operatorRunKindEnum("kind").notNull(),
+    day: date("day", { mode: "string" }).notNull(),
+    noteId: uuid("note_id").references(() => notes.id, { onDelete: "set null" }),
+    completedAt: timestamp("completed_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.day] })],
 );
 
 export const copilotMessages = pgTable(
@@ -242,3 +262,36 @@ export type ErrorSheet = typeof errorSheets.$inferSelect;
 export type JobApplication = typeof jobApplications.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type CopilotMessage = typeof copilotMessages.$inferSelect;
+
+/** Persistent, conservative AI allowances; no prompts or provider credentials. */
+export const aiGuardWindows = pgTable("ai_guard_windows", {
+  key: text("key").primaryKey(),
+  reservedMicros: integer("reserved_micros").notNull().default(0),
+});
+
+export const aiGuardRequests = pgTable(
+  "ai_guard_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    namespace: text("namespace").notNull(),
+    userId: text("user_id").notNull(),
+    kind: text("kind").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
+  },
+  (t) => [index("ai_guard_requests_namespace_time_idx").on(t.namespace, t.createdAt)],
+);
+
+export const aiGuardReservations = pgTable(
+  "ai_guard_reservations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    namespace: text("namespace").notNull(),
+    userId: text("user_id").notNull(),
+    kind: text("kind").notNull(),
+    reservedMicros: integer("reserved_micros").notNull(),
+    inputBytes: integer("input_bytes").notNull(),
+    maxOutputTokens: integer("max_output_tokens").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
+  },
+  (t) => [index("ai_guard_reservations_namespace_time_idx").on(t.namespace, t.createdAt)],
+);

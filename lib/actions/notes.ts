@@ -56,6 +56,7 @@ export async function dumpNoteAction(formData: FormData) {
     description: "",
     bodyMarkdown,
     tags: [],
+    isDump: true,
   });
   if (!row) redirect("/app/notes");
   revalidatePath("/app");

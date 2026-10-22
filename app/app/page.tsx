@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listPinnedErrorSheets } from "@/lib/db/queries/error-sheets";
 import { listFollowUpJobs, listPinnedJobs } from "@/lib/db/queries/jobs";
+import { getPinnedTodayNote } from "@/lib/db/queries/operator-home";
 import {
   inboxSummary,
   listPinnedNotes,
@@ -17,7 +18,7 @@ import { requireUserId } from "@/lib/session";
 
 export default async function HomePage() {
   const userId = await requireUserId();
-  const [tasks, notes, jobs, subjects, inbox, pinnedNotes, pinnedSheets, pinnedJobs] =
+  const [tasks, notes, jobs, subjects, inbox, pinnedNotes, pinnedSheets, pinnedJobs, todayNote] =
     await Promise.all([
       withDb([], () => listOpenTasks(userId)),
       withDb([], () => listRecentNotes(userId)),
@@ -29,14 +30,30 @@ export default async function HomePage() {
       withDb([], () => listPinnedNotes(userId)),
       withDb([], () => listPinnedErrorSheets(userId)),
       withDb([], () => listPinnedJobs(userId)),
+      withDb(null, () => getPinnedTodayNote(userId)),
     ]);
   const last = notes[0];
   const nextTask = tasks[0];
   const nextJob = jobs[0];
+  const otherPinnedNotes = pinnedNotes.filter((note) => note.id !== todayNote?.id);
 
   return (
     <div className="space-y-8">
       <PageHeader eyebrow="Home" title="Workspace" />
+      {todayNote ? (
+        <Card className="border-l-4 border-l-theme-orange">
+          <CardHeader>
+            <CardTitle>
+              <Link href={`/app/notes/${todayNote.subjectId}/${todayNote.id}`}>
+                {todayNote.title}
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="whitespace-pre-line text-sm">
+            {todayNote.bodyMarkdown}
+          </CardContent>
+        </Card>
+      ) : null}
       <QuickDump hero templates={false} subjects={subjects} />
       {nextTask ? (
         <Card className="border-l-4 border-l-theme-orange">
@@ -94,7 +111,7 @@ export default async function HomePage() {
           <span className="text-muted-foreground">Inbox 0</span>
         )}
       </div>
-      {pinnedNotes.length + pinnedSheets.length + pinnedJobs.length > 0 ? (
+      {otherPinnedNotes.length + pinnedSheets.length + pinnedJobs.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Pinned</CardTitle>
@@ -102,7 +119,7 @@ export default async function HomePage() {
           <CardContent className="grid gap-3 text-sm sm:grid-cols-3">
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Notes</p>
-              {pinnedNotes.map((note) => (
+            {otherPinnedNotes.map((note) => (
                 <Link
                   key={note.id}
                   href={`/app/notes/${note.subjectId}/${note.id}`}
