@@ -21,6 +21,8 @@ After schema changes, run `npm run db:generate` and `npm run db:migrate`.
 The operator workflow requires the repository Actions secret `OPERATOR_SECRET`,
 matching Vercel. It calls `POST /api/operator?run=night|morning` with an `x-secret`
 header at 23:30 and 06:30 Asia/Kolkata (18:00 and 01:00 UTC).
+Enable Fluid Compute in Vercel's project Functions settings: the operator uses
+a 300-second function limit, which requires Fluid Compute on Hobby.
 GitHub scheduled runs can be delayed; the five-minute acceptance window is not a
 scheduling guarantee. The workflow also supports manual dispatch.
 
@@ -59,8 +61,8 @@ overhead tokens, at $0.50/million input and $2.50/million output tokens. Unused
 reservations are not refunded, so the app may stop before actual billing reaches
 these amounts. See [Haiku pricing](https://platform.claude.com/docs/en/models/haiku-5-5/overview).
 Review the bound when pricing changes. Calls made elsewhere with the same key and
-usage before this release are outside this ledger. Set an Anthropic workspace
-monthly spending limit of $100 as an independent backstop.
+usage before this release are outside this ledger. Set an Anthropic organization
+monthly spending limit of $100 in Console Billing as an independent backstop.
 
 Chat requires a same-origin authenticated POST, a maximum 32 KiB JSON body, and
 text-only input of at most 2,000 characters. Client roles, media, tool results,
