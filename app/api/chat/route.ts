@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
@@ -41,7 +41,7 @@ import {
 import { createTask, listTasks, toggleTask } from "@/lib/db/queries/tasks";
 import type { CopilotMessage } from "@/lib/db/schema";
 import { tryParseDateOnly } from "@/lib/date";
-import { isGeminiConfigured } from "@/lib/env";
+import { isAnthropicConfigured } from "@/lib/env";
 import { AMBIENT_TRACK_IDS } from "@/lib/focus/tracks";
 import {
   CHAT_BODY_MAX,
@@ -111,8 +111,8 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
   }
-  if (!isGeminiConfigured()) {
-    return new Response("Gemini is not configured", { status: 503 });
+  if (!isAnthropicConfigured()) {
+    return new Response("Anthropic is not configured", { status: 503 });
   }
 
   const userId = session.user.id;
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
   const messages = [...rowsToUi(history), lastUser];
 
   const result = streamText({
-    model: google("gemini-3.6-flash"),
+    model: anthropic("claude-haiku-5-5"),
     maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
     system:
       "You are Chillmate copilot inside a private study/job workspace. Use tools to read and write the user's notes, interview sheets, jobs, and tasks. Never delete anything yourself — call proposeDelete and wait for UI confirmation. Never move notes yourself — call proposeMove and wait for UI confirmation. If the user asks to triage Inbox, list Inbox notes and proposeMove each to a fitting subject. If they ask to quiz on interview mistakes, listErrorSheets and quiz on uncorrected high-priority items one at a time. If they ask what to do for 15 minutes, use listTasks and uncorrected error sheets and pick one small action. You may call playAmbient or setPomodoroMinutes for Focus controls.",

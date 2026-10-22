@@ -50,13 +50,13 @@ function pad(value: number) {
 
 export function WorkspaceShell({
   user,
-  geminiReady,
+  anthropicReady,
   initialMessages,
   dumpSubjects,
   children,
 }: {
   user: User;
-  geminiReady: boolean;
+  anthropicReady: boolean;
   initialMessages: CopilotMessage[];
   dumpSubjects: Array<{ id: string; name: string }>;
   children: React.ReactNode;
@@ -142,7 +142,7 @@ export function WorkspaceShell({
           <CopilotPanel
             open={copilotOpen}
             onOpenChange={setCopilotOpen}
-            geminiReady={geminiReady}
+            anthropicReady={anthropicReady}
             initialMessages={initialMessages}
           />
         </div>

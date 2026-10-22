@@ -3,7 +3,7 @@ import { WorkspaceStateProvider } from "@/components/workspace/workspace-state";
 import { listThreadMessages } from "@/lib/db/queries/copilot";
 import { listSubjects } from "@/lib/db/queries/subjects";
 import { withDb } from "@/lib/db/safe";
-import { isGeminiConfigured } from "@/lib/env";
+import { isAnthropicConfigured } from "@/lib/env";
 import { requireSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export default async function AppLayout({
     <WorkspaceStateProvider>
       <WorkspaceShell
         user={session.user}
-        geminiReady={isGeminiConfigured()}
+        anthropicReady={isAnthropicConfigured()}
         initialMessages={thread.messages}
         dumpSubjects={dumpSubjects}
       >

@@ -37,12 +37,12 @@ function toUiMessages(rows: CopilotMessage[]): UIMessage[] {
 export function CopilotPanel({
   open,
   onOpenChange,
-  geminiReady,
+  anthropicReady,
   initialMessages,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  geminiReady: boolean;
+  anthropicReady: boolean;
   initialMessages: CopilotMessage[];
 }) {
   const [desktop, setDesktop] = useState(false);
@@ -56,7 +56,7 @@ export function CopilotPanel({
 
   const chat = (
     <CopilotChat
-      geminiReady={geminiReady}
+      anthropicReady={anthropicReady}
       initialMessages={initialMessages}
       onClose={() => onOpenChange(false)}
     />
@@ -79,11 +79,11 @@ export function CopilotPanel({
 }
 
 function CopilotChat({
-  geminiReady,
+  anthropicReady,
   initialMessages,
   onClose,
 }: {
-  geminiReady: boolean;
+  anthropicReady: boolean;
   initialMessages: CopilotMessage[];
   onClose: () => void;
 }) {
@@ -186,17 +186,16 @@ function CopilotChat({
           Close
         </Button>
       </div>
-      {!geminiReady ? (
+      {!anthropicReady ? (
         <p className="m-4 rounded-lg bg-theme-orange/20 px-3 py-2 text-sm">
-          Add GOOGLE_GENERATIVE_AI_API_KEY to enable chat. The rest of the app
-          still works.
+          Add ANTHROPIC_API_KEY to enable chat. The rest of the app still works.
         </p>
       ) : null}
       <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4 text-sm">
         {messages.length === 0 ? (
           <p className="text-muted-foreground">
             Ask to dump, triage Inbox, quiz a mistake, or pick 15 minutes.
-            Copilot sends your notes, tasks, and jobs to Gemini to answer.
+            Copilot sends your notes, tasks, and jobs to Claude by Anthropic to answer.
           </p>
         ) : null}
         {messages.map((message) => (
@@ -238,7 +237,7 @@ function CopilotChat({
         className="border-t border-border p-3"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!input.trim() || !geminiReady) return;
+          if (!input.trim() || !anthropicReady) return;
           void sendMessage({ text: input });
           setInput("");
         }}
@@ -250,13 +249,13 @@ function CopilotChat({
               setInput(event.currentTarget.value.slice(0, CHAT_USER_TEXT_MAX))
             }
             maxLength={CHAT_USER_TEXT_MAX}
-            placeholder={geminiReady ? "Ask Chillmate…" : "Gemini key missing"}
-            disabled={!geminiReady || status === "streaming"}
+            placeholder={anthropicReady ? "Ask Chillmate…" : "Anthropic key missing"}
+            disabled={!anthropicReady || status === "streaming"}
           />
           <Button
             type="submit"
             size="sm"
-            disabled={!geminiReady || status === "streaming" || !input.trim()}
+            disabled={!anthropicReady || status === "streaming" || !input.trim()}
           >
             Send
           </Button>
